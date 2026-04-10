@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
+    "build": "npm run typecheck",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit"
   },
