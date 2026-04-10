@@ -15,7 +15,7 @@ type DataPart = { inlineData: { data: string; mimeType: string } };
 
 const app = new Hono<Env>();
 
-const SAFE_SETTINGS = [
+const LOOSE_SAFETY_SETTINGS = [
   { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
   { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
   { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
@@ -135,6 +135,9 @@ app.post("/api/translate", async (c) => {
     const response = await ai.models.generateContent({
       model: "gemini-flash-lite-latest",
       contents: `Translate the following text. If it is Korean, translate to English. If it is English, translate to Korean. Only return the translated text without explanation or quotes.\n\nText: ${text}`,
+      config: {
+        safetySettings: LOOSE_SAFETY_SETTINGS as any,
+      },
     });
 
     return c.json({ translatedText: response.text?.trim() || text });
@@ -186,7 +189,7 @@ app.post("/api/extract-prompt", async (c) => {
             "art_style",
           ],
         },
-        safetySettings: SAFE_SETTINGS as any,
+        safetySettings: LOOSE_SAFETY_SETTINGS as any,
         temperature: 0.4,
       },
     });
@@ -225,7 +228,7 @@ app.post("/api/generate-image", async (c) => {
           aspectRatio: body.aspectRatio || "16:9",
           imageSize: body.imageSize || "1K",
         },
-        safetySettings: SAFE_SETTINGS as any,
+        safetySettings: LOOSE_SAFETY_SETTINGS as any,
         temperature: 0.4,
       },
     });
@@ -268,6 +271,7 @@ app.post("/api/upscale-image", async (c) => {
           imageSize: body.targetSize || "2K",
           aspectRatio: body.aspectRatio || "16:9",
         },
+        safetySettings: LOOSE_SAFETY_SETTINGS as any,
       },
     });
 
