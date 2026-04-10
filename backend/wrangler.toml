@@ -5,4 +5,4 @@ compatibility_date = "2026-04-10"
 [vars]
 # Comma-separated list of allowed origins.
 # Example: "http://localhost:3000,https://your-frontend.example.com"
-ALLOWED_ORIGINS = "http://localhost:3000"
+ALLOWED_ORIGINS = "http://localhost:3000,https://ainaon.github.io"
