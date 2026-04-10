@@ -1,26 +1,45 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ConceptBug
 
-# ConceptBug Frontend
+Frontend + Cloudflare Worker backend for Gemini image workflows.
 
-Cloudflare Worker(backend)와 연결해서 사용하는 프론트엔드입니다.  
-Gemini API 키는 프론트에 넣지 않고, 백엔드에서만 관리합니다.
+## 1) Run Backend (Cloudflare Worker)
 
-## Local Run
+```bash
+cd backend
+npm install
+copy .dev.vars.example .dev.vars
+npm run dev
+```
 
-1. Install dependencies: `npm install`
-2. Set backend URL in `.env.local`:
-   `VITE_API_BASE_URL=https://your-worker-domain.workers.dev`
-3. Run app: `npm run dev`
+Backend local URL: `http://127.0.0.1:8787`
 
-## Backend Contract (expected)
+Required secrets for deploy:
 
-Frontend는 아래 POST 엔드포인트를 호출합니다.
+```bash
+cd backend
+npx wrangler secret put GEMINI_API_KEY
+npx wrangler secret put APP_PASSWORD
+```
 
-- `/api/translate`
-- `/api/extract-prompt`
-- `/api/generate-image`
-- `/api/upscale-image`
+## 2) Run Frontend
 
-모든 요청 헤더에 `X-App-Password`를 포함합니다.
+```bash
+npm install
+copy .env.local.example .env.local
+npm run dev
+```
+
+`.env.local` should contain:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8787
+```
+
+## Backend APIs used by frontend
+
+- `POST /api/translate`
+- `POST /api/extract-prompt`
+- `POST /api/generate-image`
+- `POST /api/upscale-image`
+
+All `/api/*` calls require `X-App-Password` header.
