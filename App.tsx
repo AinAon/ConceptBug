@@ -727,7 +727,6 @@ const App: React.FC = () => {
           body { min-width: 0 !important; padding: 8px !important; }
           body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch { height: calc(100vh - 16px) !important; gap: 8px !important; }
           body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch > div.flex-grow.h-full.min-w-0 { flex: 1 1 auto !important; min-width: 0 !important; }
-          body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch > div:last-child { display: none !important; }
         `;
         frameDoc.head.appendChild(style);
       }
@@ -1181,82 +1180,16 @@ const App: React.FC = () => {
         </div>
       </main>
       ) : activeAppTab === 'photographer' ? (
-      <main className="flex-1 grid grid-cols-[minmax(0,1fr)_320px] gap-[10px] h-full overflow-hidden relative">
-        <div className="min-w-0 h-full overflow-hidden">
-          <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
-            <iframe
-              ref={photographerFrameRef}
-              onLoad={handlePhotographerFrameLoad}
-              title="AI Photographer"
-              src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
-              className="w-full h-full border border-white/5 rounded-[5px] bg-black"
-            />
-          </section>
-        </div>
-
-        <div className="w-[320px] shrink-0 h-full flex flex-col gap-[10px] overflow-hidden">
-          <section className="h-full bg-zinc-900/40 border border-white/5 rounded-[5px] p-3 flex flex-col gap-2 overflow-hidden">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">SUBJECT PROMPT</h2>
-            <textarea
-              value={photographerSubjectDetail}
-              onChange={(e) => handlePhotographerSubjectChange(e.target.value)}
-              placeholder="사진 프롬프트를 직접 입력하세요..."
-              className="w-full h-[190px] bg-black/40 border border-white/5 rounded-lg p-3 text-[12px] outline-none transition custom-scrollbar resize-none leading-relaxed"
-            />
-            <div className="flex items-center justify-between mt-1">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">PREVIEW</h2>
-              <button
-                onClick={handlePhotoCopyPrompt}
-                className="px-2.5 py-1.5 bg-white/5 border border-white/5 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-white/20 transition-all"
-              >
-                COPY PROMPT
-              </button>
-            </div>
-            <textarea
-              readOnly
-              value={photographerPrompt}
-              className="w-full flex-1 bg-black/40 border border-white/5 rounded-lg p-3 text-[11px] outline-none transition custom-scrollbar resize-none font-mono leading-relaxed"
-            />
-            <button
-              onClick={handlePhotoGenerate}
-              disabled={isPhotoGenerating}
-              className={`w-full h-10 rounded-xl text-[12px] font-black transition-all flex items-center justify-center gap-2 shadow-2xl active:scale-[0.98] tracking-[0.2em] uppercase ${isPhotoGenerating ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed opacity-50' : 'bg-[#40a5cd] hover:bg-[#358eb0] text-white'} disabled:opacity-50`}
-            >
-              {isPhotoGenerating ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
-              {isPhotoGenerating ? 'GENERATING...' : 'GENERATE'}
-            </button>
-            {photoError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] rounded-xl text-center font-black uppercase tracking-widest">
-                {photoError}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {isPhotoModalOpen && selectedPhotoResult && (
-          <div className="absolute inset-0 bg-black/70 z-40 flex items-center justify-center p-6">
-            <div className="w-[92%] h-[88%] bg-zinc-900 border border-white/10 rounded-xl overflow-hidden flex flex-col">
-              <div className="flex-1 flex items-center justify-center bg-black">
-                <img src={selectedPhotoResult.url} className="max-w-full max-h-full object-contain" alt="Generated" />
-              </div>
-              <div className="p-3 border-t border-white/10 flex items-center justify-end gap-2">
-                <a
-                  href={selectedPhotoResult.url}
-                  download={`photo_${selectedPhotoResult.timestamp}.jpg`}
-                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-300 hover:text-white hover:border-white/20"
-                >
-                  Download
-                </a>
-                <button
-                  onClick={() => setIsPhotoModalOpen(false)}
-                  className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-300 hover:text-white hover:border-white/20"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      <main className="flex-1 h-full overflow-hidden">
+        <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
+          <iframe
+            ref={photographerFrameRef}
+            onLoad={handlePhotographerFrameLoad}
+            title="AI Photographer"
+            src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
+            className="w-full h-full border border-white/5 rounded-[5px] bg-black"
+          />
+        </section>
       </main>
       ) : (
       <main className="flex-1 h-full overflow-hidden">

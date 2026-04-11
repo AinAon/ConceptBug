@@ -19,7 +19,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            font-family: 'Noto Sans KR', sans-serif;
             overflow: hidden; 
             height: 100vh;
             display: flex;
@@ -197,15 +197,11 @@
             font-size: 9px; color: var(--accent-color); text-align: center; height: 12px;
         }
 
-        /* Creator Signature */
-        .creator-sig {
-            position: fixed; bottom: 8px; left: 12px; font-size: 10px; color: #4a5568; font-family: sans-serif; pointer-events: none; opacity: 0.6; z-index: 50;
-        }
         .archive-thumb {
             position: relative;
-            border: 1px solid #2d3748;
-            border-radius: 6px;
             overflow: hidden;
+            border-radius: 6px;
+            border: 1px solid #2d3748;
             background: #000;
             transition: border-color 0.2s;
         }
@@ -222,16 +218,21 @@
             height: 18px;
             border-radius: 999px;
             border: 1px solid #2d3748;
-            background: rgba(0, 0, 0, 0.66);
+            background: rgba(0,0,0,0.65);
             color: #fff;
             font-size: 11px;
             line-height: 1;
-            cursor: pointer;
             opacity: 0;
             transition: opacity 0.2s, background 0.2s;
         }
         .archive-thumb:hover .archive-delete { opacity: 1; }
-        .archive-delete:hover { background: rgba(239, 68, 68, 0.9); }
+        .archive-delete:hover { background: rgba(239,68,68,0.9); }
+        #resultModal[hidden] { display: none !important; }
+
+        /* Creator Signature */
+        .creator-sig {
+            position: fixed; bottom: 8px; left: 12px; font-size: 10px; color: #4a5568; font-family: sans-serif; pointer-events: none; opacity: 0.6; z-index: 50;
+        }
     </style>
 </head>
 <body class="p-2 lg:p-4 w-full h-screen min-w-[1280px]">
@@ -241,7 +242,7 @@
             <span class="text-cyan-400">AI</span> Photographer
         </h1>
         <p class="text-gray-500 text-xs">
-            Refined Layout ??Enhanced 3D Models & Prompts ??Created by Lee Seongwon
+            Refined Layout | Enhanced 3D Models & Prompts | Created by Lee Seongwon
         </p>
     </header>
 
@@ -286,7 +287,7 @@
                             <div class="grid-line-v" style="left: 33.3%;"></div><div class="grid-line-v" style="left: 66.6%;"></div>
                             <div class="grid-line-h" style="top: 33.3%;"></div><div class="grid-line-h" style="top: 66.6%;"></div>
                         </div>
-                        <button class="vp-btn right-2" onclick="resetCamera()">??Reset</button>
+                        <button class="vp-btn right-2" onclick="resetCamera()">Reset</button>
                         <button class="vp-btn left-2" id="gridBtn" onclick="toggleGrid()"># Grid</button>
                         <div class="absolute bottom-2 left-2 text-xs font-mono text-cyan-300 bg-black/50 px-2 py-1 rounded pointer-events-none z-10">
                             <span id="debug-angle">Front</span> | <span id="debug-comp">Center</span>
@@ -294,14 +295,14 @@
                     </div>
                 </div>
             </div>
-            <div class="card p-3 h-[210px] flex flex-col gap-3 overflow-hidden">
+            <div class="card p-3 h-[210px] flex flex-col gap-2 overflow-hidden">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <button id="archiveModeBtn" class="text-gray-500 hover:text-white text-xs border border-gray-700 rounded px-1.5 py-0.5 transition">↔</button>
+                        <button id="archiveModeBtn" class="text-gray-500 hover:text-white text-xs border border-gray-700 rounded px-1.5 py-0.5 transition">H</button>
                         <label class="text-xs font-bold text-gray-500 uppercase tracking-[0.3em]">Archive</label>
                     </div>
                 </div>
-                <div id="embedArchiveGrid" class="flex-1 overflow-y-auto pr-1"></div>
+                <div id="archiveGrid" class="flex-1 overflow-y-auto pr-1"></div>
             </div>
         </div>
 
@@ -349,7 +350,7 @@
             <div class="card p-1 bg-gradient-to-br from-cyan-600 to-sky-800 flex flex-col h-full">
                 <div class="bg-[#13151a] rounded-[0.5rem] p-4 flex-grow flex flex-col h-full overflow-hidden">
                     <h2 class="font-bold text-white mb-4 flex items-center gap-2 text-xl">
-                        <span>?? Prompt</span>
+                        <span>Prompt</span>
                     </h2>
                     
                     <div class="mb-4">
@@ -371,6 +372,10 @@
                         <button id="copyBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded font-bold text-sm transition-all active:scale-95 shadow-lg uppercase tracking-wider shrink-0">
                             Copy Prompt
                         </button>
+                        <button id="generateBtn" class="w-full mt-2 bg-[#40a5cd] hover:bg-[#358eb0] text-white py-3 rounded font-bold text-sm transition-all active:scale-95 shadow-lg uppercase tracking-wider shrink-0">
+                            Generate
+                        </button>
+                        <div id="genError" class="hidden mt-2 p-2 bg-red-500/15 border border-red-500/30 text-red-300 text-[10px] rounded text-center font-bold"></div>
                     </div>
                 </div>
             </div>
@@ -380,6 +385,18 @@
     
     <!-- Signature -->
     <div class="creator-sig">Created by Lee Seongwon</div>
+
+    <div id="resultModal" hidden class="fixed inset-0 bg-black/70 z-[80] p-6">
+        <div class="w-full h-full card p-3 flex flex-col">
+            <div class="flex-1 min-h-0 bg-black rounded-lg flex items-center justify-center overflow-hidden">
+                <img id="resultModalImage" src="" alt="Generated" class="max-w-full max-h-full object-contain" />
+            </div>
+            <div class="pt-3 flex justify-end gap-2">
+                <a id="resultDownload" href="#" download="photo_result.jpg" class="px-3 py-2 bg-white/5 border border-white/10 rounded text-xs font-bold uppercase tracking-wider">Download</a>
+                <button id="closeModalBtn" class="px-3 py-2 bg-white/5 border border-white/10 rounded text-xs font-bold uppercase tracking-wider">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- UPDATED IMAGE LINKS (v30) ---
@@ -409,7 +426,7 @@
         };
         const getImg = (id) => IMAGES[id] || IMAGES['canon'];
 
-        const SUBJECTS = [{id:'human',label:'?몃Ъ',img:'human'},{id:'product',label:'?쒗뭹',img:'product'},{id:'landscape',label:'諛곌꼍',img:'landscape'}];
+        const SUBJECTS = [{id:'human',label:'인물',img:'human'},{id:'product',label:'제품',img:'product'},{id:'landscape',label:'배경',img:'landscape'}];
         
         const SUB_MODES = {
             human: [
@@ -445,7 +462,7 @@
 
         const FOCAL_STEPS = [8, 16, 24, 35, 50, 85, 200];
         const FOCAL_KW = {
-            8: "extreme fisheye distortion, spherical warping, 180째 panoramic field of view",
+            8: "extreme fisheye distortion, spherical warping, 180 degree panoramic field of view",
             16: "ultra-wide angle perspective, dramatic depth exaggeration, expansive environmental context",
             24: "wide angle framing, environmental storytelling, noticeable perspective pull",
             35: "natural street photography perspective, balanced proportions, classic documentary look",
@@ -460,6 +477,9 @@
         const SH_LABELS = ['Frozen', 'Sharp', 'Action', 'Std', 'Motion', 'Blur', 'Long', 'Silk'];
         const VIG_LABELS = ['None', 'Subtle', 'Moderate', 'Strong', 'Heavy'];
         const CHR_LABELS = ['Clean', 'Subtle', 'Noticeable', 'Glitch', 'Broken'];
+        const API_BASE_URL = 'https://conceptbug-backend.persona-worker.workers.dev';
+        const MODEL_ID = 'gemini-3.1-flash-image-preview';
+        const IMAGE_SIZE = '1K';
 
         let state = {
             subjectMode: 'human',
@@ -559,55 +579,140 @@
 
             $('subjectDetail').addEventListener('input', updatePrompt);
             $('copyBtn').addEventListener('click', () => { $('finalOutput').select(); document.execCommand('copy'); });
-            $('archiveModeBtn')?.addEventListener('click', toggleArchiveMode);
-            window.addEventListener('message', (event) => {
-                const payload = event.data;
-                if (!payload || typeof payload !== 'object') return;
-                if (payload.type !== 'conceptbug_archive_sync') return;
-                archiveItems = Array.isArray(payload.items) ? payload.items : [];
-                renderEmbedArchive();
+            $('archiveModeBtn').addEventListener('click', toggleArchiveMode);
+            $('generateBtn').addEventListener('click', handleGenerate);
+            $('closeModalBtn').addEventListener('click', closeResultModal);
+            $('resultModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeResultModal();
             });
             window.addEventListener('resize', resizeViewport);
-            renderEmbedArchive();
+            renderArchive();
             updatePrompt();
         }
 
-        function renderEmbedArchive() {
-            const grid = $('embedArchiveGrid');
+        function showGenError(message) {
+            const errorEl = $('genError');
+            if (!errorEl) return;
+            if (!message) {
+                errorEl.classList.add('hidden');
+                errorEl.textContent = '';
+                return;
+            }
+            errorEl.classList.remove('hidden');
+            errorEl.textContent = message;
+        }
+
+        function openResultModal(imageUrl, fileName) {
+            const modal = $('resultModal');
+            const img = $('resultModalImage');
+            const download = $('resultDownload');
+            img.src = imageUrl;
+            download.href = imageUrl;
+            download.download = fileName;
+            modal.hidden = false;
+        }
+
+        function closeResultModal() {
+            $('resultModal').hidden = true;
+        }
+
+        function renderArchive() {
+            const grid = $('archiveGrid');
             if (!grid) return;
-            if (!archiveItems || archiveItems.length === 0) {
+
+            if (!archiveItems.length) {
                 grid.className = 'flex-1 overflow-y-auto pr-1';
                 grid.innerHTML = '<div class="h-full w-full flex items-center justify-center opacity-10"><span class="font-black uppercase tracking-[0.4em] text-2xl">EMPTY</span></div>';
                 return;
             }
+
             const cols = archiveVertical ? 'grid-cols-1' : 'grid-cols-6';
             grid.className = `flex-1 overflow-y-auto pr-1 grid gap-2 ${cols}`;
             grid.innerHTML = '';
-            archiveItems.forEach((item) => {
-                const wrap = document.createElement('div');
-                wrap.className = `archive-thumb ${item.selected ? 'active' : ''}`;
-                wrap.innerHTML = `
+            archiveItems.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `archive-thumb ${index === 0 ? 'active' : ''}`;
+                card.innerHTML = `
                     <button class="archive-delete" title="Delete">×</button>
                     <img src="${item.url}" class="w-full aspect-square object-cover block" alt="" />
                     <div class="text-[9px] text-gray-400 py-1 bg-black/40 text-center">${item.duration}s</div>
                 `;
-                wrap.addEventListener('click', () => {
-                    window.parent.postMessage({ type: 'conceptbug_archive_select', index: item.index }, '*');
+                card.addEventListener('click', () => {
+                    openResultModal(item.url, item.fileName);
                 });
-                const del = wrap.querySelector('.archive-delete');
-                del.addEventListener('click', (e) => {
+                card.querySelector('.archive-delete').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    window.parent.postMessage({ type: 'conceptbug_archive_delete', index: item.index }, '*');
+                    archiveItems = archiveItems.filter((_, idx) => idx !== index);
+                    renderArchive();
                 });
-                grid.appendChild(wrap);
+                grid.appendChild(card);
             });
         }
 
         function toggleArchiveMode() {
             archiveVertical = !archiveVertical;
-            const btn = $('archiveModeBtn');
-            if (btn) btn.textContent = archiveVertical ? '↕' : '↔';
-            renderEmbedArchive();
+            $('archiveModeBtn').textContent = archiveVertical ? 'V' : 'H';
+            renderArchive();
+        }
+
+        async function handleGenerate() {
+            showGenError('');
+            const prompt = $('finalOutput').value.trim();
+            if (!prompt) {
+                showGenError('프롬프트가 비어 있습니다.');
+                return;
+            }
+
+            const credential = localStorage.getItem('conceptbug_api_credential') || '';
+            if (!credential) {
+                showGenError('API 키가 없습니다. 컨셉충 탭에서 먼저 입력해 주세요.');
+                return;
+            }
+
+            const button = $('generateBtn');
+            const startedAt = Date.now();
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'GENERATING...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/generate-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-App-Password': credential,
+                    },
+                    body: JSON.stringify({
+                        prompt,
+                        model: MODEL_ID,
+                        aspectRatio: state.ar.val,
+                        imageSize: IMAGE_SIZE,
+                        referenceImages: [],
+                    }),
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data?.error || data?.message || `Request failed (${response.status})`);
+                }
+
+                const imageUrl = data.imageDataUrl || (data.imageBase64 ? `data:${data.mimeType || 'image/png'};base64,${data.imageBase64}` : '');
+                if (!imageUrl) throw new Error('No generated image returned.');
+
+                const now = new Date();
+                const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+                const fileName = `photographer_${stamp}.jpg`;
+                const duration = ((Date.now() - startedAt) / 1000).toFixed(1);
+
+                archiveItems.unshift({ url: imageUrl, duration, fileName, prompt, ts: Date.now() });
+                renderArchive();
+                openResultModal(imageUrl, fileName);
+            } catch (error) {
+                showGenError(error?.message || '이미지 생성 중 오류가 발생했습니다.');
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
         }
 
         function initDragKnob(id, onChange) {
@@ -674,7 +779,7 @@
                     <img src="${getImg(sub.img)}" alt="${sub.label}">
                     <div class="visual-label">${sub.label}</div>
                     <div class="visual-overlay bg-black/80">
-                        <div class="visual-desc">Set logic for ${sub.label}</div>
+                        <div class="visual-desc">${sub.label} 설정</div>
                     </div>
                 `;
                 card.onclick = () => { 
@@ -1169,9 +1274,9 @@
             else shortAngle = 'Eye Level';
             
             if(absAzi < 10) shortAngle += ' / Front';
-            else if(absAzi < 50) shortAngle += ` / 쩐 ${aziDeg > 0 ? 'L' : 'R'}`;
+            else if(absAzi < 50) shortAngle += ` / 3Q ${aziDeg > 0 ? 'L' : 'R'}`;
             else if(absAzi < 100) shortAngle += ` / Side ${aziDeg > 0 ? 'L' : 'R'}`;
-            else if(absAzi < 150) shortAngle += ' / Rear 쩐';
+            else if(absAzi < 150) shortAngle += ' / Rear 3Q';
             else shortAngle += ' / Back';
             
             $('debug-angle').innerText = shortAngle;
@@ -1218,7 +1323,7 @@
             const fl = state.focal;
             let lensDesc = '';
             if(fl <= 10) {
-                lensDesc = `${fl}mm fisheye lens, extreme barrel distortion, ultra-wide 180째 field of view, everything in focus`;
+                lensDesc = `${fl}mm fisheye lens, extreme barrel distortion, ultra-wide 180 degree field of view, everything in focus`;
             } else if(fl <= 18) {
                 lensDesc = `${fl}mm ultra-wide angle lens, expansive field of view, exaggerated perspective distortion, deep depth of field`;
             } else if(fl <= 28) {
@@ -1272,3 +1377,4 @@
     </script>
 </body>
 </html>
+
