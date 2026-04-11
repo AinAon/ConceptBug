@@ -210,6 +210,8 @@ const App: React.FC = () => {
   const [photoSelectedIndex, setPhotoSelectedIndex] = useState(0);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isPhotoArchiveSide, setIsPhotoArchiveSide] = useState(false);
+  const [photoSplitPercent, setPhotoSplitPercent] = useState(70);
+  const photoContainerRef = useRef<HTMLDivElement>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
@@ -812,6 +814,27 @@ const App: React.FC = () => {
     }
   };
 
+  const startPhotoResizing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const handleMove = (moveEvent: MouseEvent) => {
+      if (!photoContainerRef.current) return;
+      const rect = photoContainerRef.current.getBoundingClientRect();
+      if (isPhotoArchiveSide) {
+        const newWidth = ((moveEvent.clientX - rect.left) / rect.width) * 100;
+        setPhotoSplitPercent(Math.min(Math.max(newWidth, 10), 90));
+      } else {
+        const newHeight = ((moveEvent.clientY - rect.top) / rect.height) * 100;
+        setPhotoSplitPercent(Math.min(Math.max(newHeight, 10), 90));
+      }
+    };
+    const stopResizing = () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', stopResizing);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', stopResizing);
+  };
+
   const selectedPhotoResult = photoResults[photoSelectedIndex];
 
   const selectedTab = APP_TABS.find((tab) => tab.id === activeAppTab);
@@ -1135,8 +1158,11 @@ const App: React.FC = () => {
       </main>
       ) : activeAppTab === 'photographer' ? (
       <main className="flex-1 flex gap-[10px] h-full overflow-hidden relative">
-        <div className="flex-1 min-w-0 h-full flex flex-col gap-[10px] overflow-hidden">
-          <section className="flex-[7] min-h-0 bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
+        <div ref={photoContainerRef} className={`flex-1 min-w-0 h-full flex ${isPhotoArchiveSide ? 'flex-row' : 'flex-col'} gap-0 overflow-hidden relative`}>
+          <section
+            style={isPhotoArchiveSide ? { width: `${photoSplitPercent}%` } : { height: `${photoSplitPercent}%` }}
+            className="bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden"
+          >
             <iframe
               ref={photographerFrameRef}
               onLoad={handlePhotographerFrameLoad}
@@ -1146,7 +1172,14 @@ const App: React.FC = () => {
             />
           </section>
 
-          <section className="flex-[3] min-h-0 bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden">
+          <div
+            onMouseDown={startPhotoResizing}
+            className={`z-30 transition-colors group relative flex items-center justify-center ${isPhotoArchiveSide ? 'w-[10px] h-full cursor-col-resize hover:bg-[#40a5cd]/20' : 'w-full h-[10px] cursor-row-resize hover:bg-[#40a5cd]/20'}`}
+          >
+            <div className={`${isPhotoArchiveSide ? 'w-[2px] h-12' : 'h-[2px] w-12'} bg-white/10 rounded-full group-hover:bg-[#40a5cd] transition-colors`} />
+          </div>
+
+          <section className={`${isPhotoArchiveSide ? 'flex-1 h-full' : 'flex-1'} bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden`}>
             <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <button
