@@ -9,6 +9,9 @@ type Env = {
     APP_PASSWORD_HASH?: string;
     ALLOWED_ORIGINS?: string;
   };
+  Variables: {
+    effectiveApiKey: string;
+  };
 };
 
 type DataPart = { inlineData: { data: string; mimeType: string } };
@@ -115,11 +118,21 @@ app.use("*", async (c, next) => {
 app.get("/", (c) => c.json({ ok: true, service: "conceptbug-backend" }));
 
 app.use("/api/*", async (c, next) => {
-  const password = c.req.header("X-App-Password") || "";
-  const valid = await verifyPassword(password, c.env);
-  if (!valid) {
-    return c.json({ error: "Unauthorized" }, 401);
+  const credential = (c.req.header("X-App-Password") || "").trim();
+  if (!credential) {
+    return c.json({ error: "API key is invalid." }, 401);
   }
+
+  if (/^\d{4}$/.test(credential)) {
+    const valid = await verifyPassword(credential, c.env);
+    if (!valid) {
+      return c.json({ error: "API key is invalid." }, 401);
+    }
+    c.set("effectiveApiKey", c.env.GEMINI_API_KEY);
+    return next();
+  }
+
+  c.set("effectiveApiKey", credential);
   return next();
 });
 
@@ -131,7 +144,7 @@ app.post("/api/translate", async (c) => {
       return c.json({ translatedText: "" });
     }
 
-    const ai = new GoogleGenAI({ apiKey: c.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: c.get("effectiveApiKey") });
     const response = await ai.models.generateContent({
       model: "gemini-flash-lite-latest",
       contents: `Translate the following text. If it is Korean, translate to English. If it is English, translate to Korean. Only return the translated text without explanation or quotes.\n\nText: ${text}`,
@@ -162,7 +175,7 @@ app.post("/api/extract-prompt", async (c) => {
     const model =
       body.selectedModelId === "gemini-2.5-flash-image" ? "gemini-2.5-flash" : "gemini-3.1-pro-preview";
 
-    const ai = new GoogleGenAI({ apiKey: c.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: c.get("effectiveApiKey") });
     const response = await ai.models.generateContent({
       model,
       contents: {
@@ -216,7 +229,7 @@ app.post("/api/generate-image", async (c) => {
     }
 
     const refs = (body.referenceImages || []).slice(0, 8);
-    const ai = new GoogleGenAI({ apiKey: c.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: c.get("effectiveApiKey") });
 
     const response = await ai.models.generateContent({
       model: body.model || "gemini-3.1-flash-image-preview",
@@ -253,7 +266,7 @@ app.post("/api/upscale-image", async (c) => {
       return c.json({ error: "dataUrl is required." }, 400);
     }
 
-    const ai = new GoogleGenAI({ apiKey: c.env.GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: c.get("effectiveApiKey") });
     const response = await ai.models.generateContent({
       model: body.model || "gemini-3.1-flash-image-preview",
       contents: {

@@ -95,6 +95,15 @@ const callBackend = async <T>(path: string, password: string, payload: unknown):
   return data as T;
 };
 
+export const validateApiCredential = async (credential: string): Promise<boolean> => {
+  try {
+    await callBackend<{ translatedText?: string }>("/api/translate", credential, { text: "" });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const extractExifPrompt = (dataUrl: string): string | null => {
   try {
     const exifObj = piexif.load(dataUrl);

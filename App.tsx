@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { TabType, PromptParts, AspectRatio, Resolution, GenerationResult } from './types';
 import { ASPECT_RATIOS, RESOLUTIONS } from './constants';
-import { generateImage, translateText, extractPromptFromImages, extractExifPrompt, upscaleImage } from './services/geminiService';
+import { generateImage, translateText, extractPromptFromImages, extractExifPrompt, upscaleImage, validateApiCredential } from './services/geminiService';
 
 /**
  * Enhanced Image Slot Component
@@ -292,7 +292,7 @@ const App: React.FC = () => {
   };
 
   const handleTranslateField = async (fieldId: string) => {
-    if (!appPassword) { setError("Password is required."); return; }
+    if (!appPassword) { setError("API Key is required."); return; }
     let textToTranslate = '';
     textToTranslate = fieldId === 'specifics' ? imageSpecifics : (imagePrompt as any)[fieldId];
     if (!textToTranslate || !textToTranslate.trim()) return;
@@ -309,7 +309,7 @@ const App: React.FC = () => {
   };
 
   const handleExtractField = async (fieldId: string) => {
-    if (!appPassword) { setError("Password is required."); return; }
+    if (!appPassword) { setError("API Key is required."); return; }
     const targetImages = imageConceptImages;
     if (targetImages.length === 0) return;
     setExtractingField(fieldId);
@@ -379,7 +379,7 @@ const App: React.FC = () => {
   }, [imagePrompt, imageRatio]);
 
   const handleExtract = async () => {
-    if (!appPassword) { setError("Password is required."); return; }
+    if (!appPassword) { setError("API Key is required."); return; }
     const targetImages = imageConceptImages;
     if (targetImages.length === 0) return;
     setIsExtracting(true);
@@ -405,7 +405,7 @@ const App: React.FC = () => {
       handleCancel();
       return;
     }
-    if (!appPassword) { setError("Password is required."); return; }
+    if (!appPassword) { setError("API Key is required."); return; }
     if (!fullPrompt.trim()) { setError("Prompt is empty."); return; }
     setIsGenerating(true);
     setError(null);
@@ -434,7 +434,7 @@ const App: React.FC = () => {
   };
 
   const handleUpscale = async () => {
-    if (!appPassword) { setError("Password is required."); return; }
+    if (!appPassword) { setError("API Key is required."); return; }
     const selectedResult = results[selectedResultIndex];
     if (!selectedResult || selectedResult.type !== 'image' || isUpscaling) return;
     setIsUpscaling(true);
@@ -648,6 +648,23 @@ const App: React.FC = () => {
     </button>
   );
 
+  const handleCredentialConfirm = async () => {
+    const credential = appPassword.trim();
+    if (!credential) return;
+
+    if (/^\d{4}$/.test(credential)) {
+      const isValid = await validateApiCredential(credential);
+      if (!isValid) {
+        setIsPasswordConfirmed(false);
+        setError("API키가 유효하지 않습니다.");
+        return;
+      }
+    }
+
+    setError(null);
+    setIsPasswordConfirmed(true);
+  };
+
   return (
     <div className={`h-screen text-zinc-200 font-['Inter'] flex overflow-hidden p-[10px] gap-[10px] relative transition-colors duration-500 bg-[#050505]`}>
       <main className="flex-1 flex gap-[10px] h-full overflow-hidden">
@@ -677,23 +694,23 @@ const App: React.FC = () => {
                 onChange={(e) => setAppPassword(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && appPassword.trim()) {
-                    setIsPasswordConfirmed(true);
+                    void handleCredentialConfirm();
                   }
                 }}
                 disabled={isPasswordConfirmed}
-                placeholder="Enter App Password"
+                placeholder="Enter Gemini API Key"
                 className="w-full bg-transparent text-[10px] text-zinc-300 placeholder:text-zinc-700 outline-none font-mono disabled:opacity-50"
               />
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (isPasswordConfirmed) {
                     setIsPasswordConfirmed(false);
                   } else if (appPassword.trim()) {
-                    setIsPasswordConfirmed(true);
+                    await handleCredentialConfirm();
                   }
                 }}
                 className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors"
-                title={isPasswordConfirmed ? "Edit Password" : "Confirm Password"}
+                title={isPasswordConfirmed ? "Edit API Key" : "Confirm API Key"}
               >
                 {isPasswordConfirmed ? <Settings2 size={12} /> : <Check size={12} />}
               </button>
