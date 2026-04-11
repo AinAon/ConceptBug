@@ -132,6 +132,8 @@ const App: React.FC = () => {
   const [activeAppTab, setActiveAppTab] = useState<(typeof APP_TABS)[number]['id']>('conceptbug');
   const [appPassword, setAppPassword] = useState('');
   const [isPasswordConfirmed, setIsPasswordConfirmed] = useState(false);
+  const [isCredentialModalOpen, setIsCredentialModalOpen] = useState(false);
+  const [credentialDraft, setCredentialDraft] = useState('');
   const [isArchiveSide, setIsArchiveSide] = useState(false);
   // 초기 아카이브 창의 높이 비율을 67로 설정
   const [splitPercent, setSplitPercent] = useState(67);
@@ -146,6 +148,7 @@ const App: React.FC = () => {
       const savedCredential = localStorage.getItem('conceptbug_api_credential');
       if (savedCredential) {
         setAppPassword(savedCredential);
+        setCredentialDraft(savedCredential);
         setIsPasswordConfirmed(true);
       }
     } catch {
@@ -201,7 +204,7 @@ const App: React.FC = () => {
   const lastMousePos = useRef({ x: 0, y: 0 });
   const abortControllerRef = useRef<AbortController | null>(null);
   
-  const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-image-preview');
+  const selectedModel = 'gemini-3.1-flash-image-preview';
   const photographerFrameRef = useRef<HTMLIFrameElement>(null);
   const [photographerSubjectDetail, setPhotographerSubjectDetail] = useState('');
   const [photographerPrompt, setPhotographerPrompt] = useState('');
@@ -445,7 +448,7 @@ const App: React.FC = () => {
       let url = await generateImage(appPassword, fullPrompt, selectedModel, currentRatio, selectedRes, currentRefs);
       if (abortControllerRef.current?.signal.aborted) return;
       const duration = (Date.now() - startTime) / 1000;
-      const modelName = selectedModel === 'gemini-2.5-flash-image' ? 'Gemini 2.5 Flash Image' : 'Gemini 3.1 Flash Image';
+      const modelName = 'Gemini 3.1 Flash Image';
       setResults(prev => [{
         type: 'image', url, prompt: fullPrompt, model: modelName,
         duration: parseFloat(duration.toFixed(1)), timestamp: Date.now()
@@ -471,7 +474,7 @@ const App: React.FC = () => {
     try {
       const upscaledUrl = await upscaleImage(appPassword, selectedResult.url, selectedResult.prompt, selectedModel);
       const duration = (Date.now() - startTime) / 1000;
-      const modelName = selectedModel === 'gemini-2.5-flash-image' ? 'Gemini 2.5 Flash Image (Upscale)' : 'Gemini 3.1 Flash Image (Upscale)';
+      const modelName = 'Gemini 3.1 Flash Image (Upscale)';
       setResults(prev => [{
         type: 'image', url: upscaledUrl, prompt: selectedResult.prompt, model: modelName,
         duration: parseFloat(duration.toFixed(1)), timestamp: Date.now()
@@ -676,8 +679,8 @@ const App: React.FC = () => {
     </button>
   );
 
-  const handleCredentialConfirm = async () => {
-    const credential = appPassword.trim();
+  const handleCredentialConfirm = async (rawValue?: string) => {
+    const credential = (rawValue ?? appPassword).trim();
     if (!credential) return;
 
     if (/^\d{4}$/.test(credential)) {
@@ -689,8 +692,11 @@ const App: React.FC = () => {
       }
     }
 
+    setAppPassword(credential);
+    setCredentialDraft(credential);
     setError(null);
     setIsPasswordConfirmed(true);
+    setIsCredentialModalOpen(false);
     try {
       localStorage.setItem('conceptbug_api_credential', credential);
     } catch {
@@ -840,7 +846,7 @@ const App: React.FC = () => {
         []
       );
       const duration = (Date.now() - startTime) / 1000;
-      const modelName = selectedModel === 'gemini-2.5-flash-image' ? 'Gemini 2.5 Flash Image' : 'Gemini 3.1 Flash Image';
+      const modelName = 'Gemini 3.1 Flash Image';
       setPhotoResults((prev) => [{
         type: 'image',
         url: generatedUrl,
@@ -865,6 +871,20 @@ const App: React.FC = () => {
   return (
     <div className={`h-screen text-zinc-200 font-['Inter'] flex overflow-hidden p-[10px] gap-[10px] relative transition-colors duration-500 bg-[#050505]`}>
       <aside className="w-[68px] shrink-0 h-full bg-zinc-900/40 border border-white/5 rounded-[5px] p-2 flex flex-col gap-2">
+        <button
+          onClick={() => {
+            setCredentialDraft(appPassword);
+            setIsCredentialModalOpen(true);
+          }}
+          title="API Key / Passcode"
+          className={`w-full h-[44px] rounded-xl border transition-all flex items-center justify-center ${
+            isPasswordConfirmed
+              ? 'bg-[#40a5cd]/30 border-[#40a5cd]/55 text-white'
+              : 'bg-[#40a5cd]/18 border-[#40a5cd]/45 text-[#9adcf3] hover:text-white'
+          }`}
+        >
+          {isPasswordConfirmed ? <Check size={18} /> : <Key size={18} />}
+        </button>
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2">
           {APP_TABS.map((tab) => (
             <button
@@ -882,6 +902,45 @@ const App: React.FC = () => {
           ))}
         </div>
       </aside>
+
+      {isCredentialModalOpen && (
+        <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="w-full max-w-[420px] bg-zinc-900 border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[12px] font-black uppercase tracking-[0.2em] text-zinc-200">API / PASSCODE</h2>
+              <button
+                onClick={() => setIsCredentialModalOpen(false)}
+                className="p-1 rounded-md text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
+                title="Close"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="flex items-center gap-2 bg-black/30 rounded-lg px-2 py-2 border border-white/10">
+              <Key size={12} className="text-zinc-500 shrink-0" />
+              <input
+                type="password"
+                value={credentialDraft}
+                onChange={(e) => setCredentialDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && credentialDraft.trim()) {
+                    void handleCredentialConfirm(credentialDraft);
+                  }
+                }}
+                placeholder="Enter Gemini API Key or 4-digit passcode"
+                className="w-full bg-transparent text-[11px] text-zinc-200 placeholder:text-zinc-600 outline-none font-mono"
+              />
+            </div>
+            <button
+              onClick={() => void handleCredentialConfirm(credentialDraft)}
+              disabled={!credentialDraft.trim()}
+              className="h-10 rounded-lg bg-[#40a5cd] hover:bg-[#358eb0] disabled:opacity-50 text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeAppTab === 'conceptbug' ? (
       <main className="flex-1 flex gap-[10px] h-full overflow-hidden">
@@ -903,53 +962,6 @@ const App: React.FC = () => {
                 <input type="file" accept=".json" onChange={handleOpen} className="hidden" />
               </label>
             </div>
-            <div className="flex items-center gap-2 bg-black/20 rounded px-2 py-1.5 border border-white/5">
-              <Key size={12} className="text-zinc-500 shrink-0" />
-              <input 
-                type="password" 
-                value={appPassword}
-                onChange={(e) => setAppPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && appPassword.trim()) {
-                    void handleCredentialConfirm();
-                  }
-                }}
-                disabled={isPasswordConfirmed}
-                placeholder="Enter Gemini API Key"
-                className="w-full bg-transparent text-[10px] text-zinc-300 placeholder:text-zinc-700 outline-none font-mono disabled:opacity-50"
-              />
-              <button
-                onClick={async () => {
-                  if (isPasswordConfirmed) {
-                    setIsPasswordConfirmed(false);
-                  } else if (appPassword.trim()) {
-                    await handleCredentialConfirm();
-                  }
-                }}
-                className="p-1 hover:bg-white/10 rounded text-zinc-400 hover:text-white transition-colors"
-                title={isPasswordConfirmed ? "Edit API Key" : "Confirm API Key"}
-              >
-                {isPasswordConfirmed ? <Settings2 size={12} /> : <Check size={12} />}
-              </button>
-            </div>
-            <div className="flex items-center gap-2 bg-black/20 rounded px-2 py-1.5 border border-white/5">
-              <Settings2 size={12} className="text-zinc-500 shrink-0" />
-              <select
-                value={selectedModel}
-                onChange={(e) => {
-                  const newModel = e.target.value;
-                  setSelectedModel(newModel);
-                  if (newModel === 'gemini-2.5-flash-image') {
-                    if (imageRatio === '9:21') setCurrentRatio('16:9');
-                    if (selectedRes === '2K' || selectedRes === '4K') setSelectedRes('1K');
-                  }
-                }}
-                className="w-full bg-transparent text-[10px] text-zinc-300 outline-none font-mono appearance-none cursor-pointer"
-              >
-                <option value="gemini-3.1-flash-image-preview" className="bg-zinc-900">Gemini 3.1 Flash Image</option>
-                <option value="gemini-2.5-flash-image" className="bg-zinc-900">Gemini 2.5 Flash Image</option>
-              </select>
-            </div>
           </section>
           <section className="h-auto bg-zinc-900/40 border border-white/5 rounded-[5px] p-3 space-y-3">
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">OUTPUT SETTINGS</h2>
@@ -957,7 +969,7 @@ const App: React.FC = () => {
               {ASPECT_RATIOS.map(ratio => (
                 <button
                   key={ratio}
-                  disabled={isGenerating || isExtracting || isUpscaling || extractingField !== null || translatingField !== null || (selectedModel === 'gemini-2.5-flash-image' && ratio === '9:21')}
+                  disabled={isGenerating || isExtracting || isUpscaling || extractingField !== null || translatingField !== null}
                   onClick={() => setCurrentRatio(ratio)}
                   className={`aspect-square flex flex-col items-center justify-center rounded-lg border text-[10px] font-black transition-all ${currentRatio === ratio ? 'bg-[#40a5cd] border-[#40a5cd] text-white shadow-2xl scale-[1.02]' : 'bg-white/5 border-white/5 text-zinc-600 hover:border-white/20'} disabled:opacity-20`}
                 >
@@ -970,7 +982,7 @@ const App: React.FC = () => {
               {RESOLUTIONS.map(res => (
                 <button
                   key={res}
-                  disabled={isGenerating || isExtracting || isUpscaling || extractingField !== null || translatingField !== null || (selectedModel === 'gemini-2.5-flash-image' && (res === '2K' || res === '4K'))}
+                  disabled={isGenerating || isExtracting || isUpscaling || extractingField !== null || translatingField !== null}
                   onClick={() => setSelectedRes(res)}
                   className={`py-1.5 rounded-lg text-[10px] font-black border transition-all ${selectedRes === res ? 'bg-[#40a5cd] border-[#40a5cd] text-white shadow-xl' : 'bg-white/5 border-white/5 text-zinc-600'} disabled:opacity-20`}
                 >
