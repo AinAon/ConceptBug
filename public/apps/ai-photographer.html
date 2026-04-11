@@ -263,12 +263,12 @@
         .creator-sig { display: none; }
     </style>
 </head>
-<body class="w-full h-screen min-w-[1280px]">
+<body class="w-full h-screen">
 
     <div id="studioLayout" class="flex gap-[10px] h-screen items-stretch p-[10px]">
 
         <!-- COL 1 (300px) : Subject, Camera, Temp -->
-        <div class="w-[300px] flex-none h-full">
+        <div class="w-[15%] flex-none h-full">
             <div class="card p-3 h-full overflow-y-auto">
                 <div class="space-y-3">
                     <label class="panel-title block">
@@ -419,7 +419,7 @@
                         </span>
                     </label>
                     <textarea id="subjectDetail" placeholder="사진 프롬프트를 직접 입력하세요..." 
-                    class="w-full bg-black/50 border border-white/10 rounded text-sm p-2 text-white focus:border-[#40a5cd] outline-none mt-2 resize-none h-56"></textarea>
+                    class="w-full bg-black/50 border border-white/10 rounded text-sm p-2 text-white focus:border-[#40a5cd] outline-none mt-2 resize-none h-64"></textarea>
                 </div>
                 <div>
                     <label class="panel-title">
@@ -428,7 +428,7 @@
                             Tags
                         </span>
                     </label>
-                    <div id="compositionTags" class="flex flex-wrap gap-1 mt-1 max-h-10 overflow-y-auto"></div>
+                    <div id="compositionTags" class="flex flex-wrap content-start gap-1 mt-1 min-h-[52px] max-h-[88px] overflow-y-auto"></div>
                 </div>
                 <div class="flex-1 flex flex-col min-h-0">
                     <div class="flex items-center justify-between mb-2">
@@ -438,12 +438,12 @@
                                 Prompt Preview
                             </span>
                         </label>
-                        <button id="copyBtn" class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
-                            Copy Prompt
-                        </button>
                     </div>
                     <textarea id="finalOutput" readonly 
-                        class="w-full h-28 bg-white/[0.03] border border-white/5 rounded text-[10px] leading-[1.6] p-3 text-white/20 font-mono focus:outline-none resize-none mb-3"></textarea>
+                        class="w-full flex-1 bg-white/[0.03] border border-white/5 rounded text-[10px] leading-[1.6] p-3 text-white/20 font-mono focus:outline-none resize-none mb-2"></textarea>
+                    <button id="copyBtn" class="w-full mb-2 px-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
+                        Copy Prompt
+                    </button>
                     <button id="generateBtn" class="w-full mt-auto bg-[#40a5cd] hover:bg-[#358eb0] text-white py-3 rounded font-black text-sm transition-all active:scale-95 shadow-lg uppercase tracking-[0.2em] shrink-0">
                         Generate
                     </button>
