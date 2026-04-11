@@ -1,121 +1,105 @@
-# ConceptBug UI Design Guide
+﻿# ConceptBug UI Design System
 
-이 문서는 ConceptBug의 UI 통일성을 유지하기 위한 단일 기준 문서입니다.  
-새 기능 추가 시 이 문서를 우선 기준으로 사용합니다.
+이 문서는 ConceptBug와 하위 앱(컨셉충, AI포토그래퍼 등)의 UI를 동일한 시각 규칙으로 유지하기 위한 기준 문서입니다.
+새 기능을 추가할 때 먼저 이 문서를 기준으로 맞춥니다.
 
-## 1. Design Principles
-
-- Dark, minimal, high-contrast UI 유지
-- 기능 밀도가 높아도 가독성 우선
-- 패널 단위 정보 구조를 유지하고 화면 분할 구조를 깨지 않기
-- 주요 액션은 Cyan 포인트 컬러로 일관
-- 인터랙션은 빠르고 짧게, 과한 애니메이션 금지
-
-## 2. Core Tokens
+## 1. Global Tokens
 
 ### Colors
-
-- Background: `#050505`
-- Brand Primary: `#40a5cd`
-- Brand Primary Hover: `#358eb0`
-- Surface Base: `bg-zinc-900/40`
-- Surface Alt: `bg-zinc-900/30`, `bg-zinc-900/10`
-- Border Default: `border-white/5`
-- Border Active/Emphasis: `border-white/80`, `ring-white/20`
-- Text Primary: `text-zinc-200`, `text-white`
-- Text Secondary: `text-zinc-500`, `text-zinc-600`, `text-zinc-700`
-- Error: `bg-red-500/10`, `border-red-500/20`, `text-red-500`
+- App Background: `#050505`
+- Primary Accent: `#40a5cd`
+- Primary Accent Hover: `#358eb0`
+- Surface: `rgba(24,24,27,0.45)`
+- Border: `rgba(255,255,255,0.08)`
+- Text Primary: `#e4e4e7`
+- Text Muted: `rgb(113 113 122)` (`text-zinc-500`)
+- Error Surface: `rgba(239,68,68,0.15)`
+- Error Border: `rgba(239,68,68,0.3)`
 
 ### Typography
+- Base Font Family: `ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif`
+- Panel Title / Sub Title (통일):
+  - `font-size: 10px`
+  - `font-weight: 900`
+  - `text-transform: uppercase`
+  - `letter-spacing: 0.3em`
+  - `line-height: 1`
+  - `color: rgb(113 113 122)`
+- CTA Button Text:
+  - `font-size: 12px`
+  - `font-weight: 900`
+  - `text-transform: uppercase`
+  - `letter-spacing: 0.2em`
+- Body Textarea:
+  - `11px ~ 12px`
+- Numeric/Camera Values:
+  - `font-mono` 허용
 
-- Font family: `Inter`
-- Label/Section title: `text-[10px] font-black uppercase tracking-[0.3em]`
-- Primary CTA text: `text-[12px] font-black uppercase tracking-[0.2em]`
-- Body input text: `text-xs` 또는 `text-[10px]` (패널에 맞춰 선택)
-- Mono-like control text(키/모델 등): `font-mono` 유지
+### Radius / Spacing / Frame
+- Panel Radius: `5px`
+- Global Layout Padding: `10px`
+- Global Panel Gap: `10px`
+- 최상위 화면 프레임(바깥 카드/테두리): **사용하지 않음**
 
-### Radius, Spacing, Shadows
+## 2. Layout Rules
 
-- Main panel radius: `rounded-[5px]`
-- Input/button inner radius: `rounded-lg` 또는 `rounded-xl`
-- Global layout spacing: `p-[10px]`, `gap-[10px]`
-- Emphasis shadow: `shadow-2xl` (CTA, 카드 강조에만 사용)
+- 기본 4열 구조를 유지한다.
+- 1열: Subject + Camera + Temp (한 개의 큰 패널)
+- 2열: Viewport + Archive (분할, H/V 전환 가능)
+- 3열: Ratio + Lens + Effects
+- 4열: Subject Prompt + Preview + String + Generate
+- 2열 분할선은 `10px` 트랙, 가운데 핸들 라인만 표시한다.
 
-## 3. Layout Rules
+## 3. Panel Rules
 
-- 기본 4영역 레이아웃 구조 유지
-- 좌측: 프로젝트/인증/옵션
-- 중앙: 결과 미리보기 + 아카이브(분할 가능)
-- 우측: 프롬프트 편집/참조 이미지/생성 액션
-- 패널은 `border border-white/5`와 반투명 다크 배경 조합 유지
-- 새 기능은 기존 패널 안에 넣되, 독립성이 크면 새 패널 추가
+- 공통 패널:
+  - `background: rgba(24,24,27,0.45)`
+  - `border: 1px solid rgba(255,255,255,0.08)`
+  - `border-radius: 5px`
+  - `backdrop-filter: blur(3px)`
+- 패널 내부 섹션 구분은 `border-top: 1px solid rgba(255,255,255,0.10)` 사용.
+- 패널 제목과 소제목은 반드시 동일한 토큰(`panel-title`) 사용.
 
-## 4. Component Patterns
+## 4. Controls
 
-### Panel
+### Select Buttons
+- 기본:
+  - 배경 `rgba(255,255,255,0.03)`
+  - 보더 `rgba(255,255,255,0.08)`
+  - 텍스트 `#a1a1aa`
+- Hover:
+  - 보더 `#40a5cd`
+  - 텍스트 `#fff`
+  - 배경 `rgba(255,255,255,0.09)`
+- Active:
+  - 배경/보더 `#40a5cd`
+  - 텍스트 `#fff`
+  - glow `0 0 14px rgba(64,165,205,0.38)`
 
-- 기본 형태: `bg-zinc-900/40 border border-white/5 rounded-[5px] p-3`
-- 제목은 상단 좌측 고정, `uppercase + tracking` 유지
+### Primary CTA
+- 배경 `#40a5cd`
+- Hover `#358eb0`
+- 텍스트 흰색 + `font-black` + uppercase
+- Disabled: `opacity: 0.5`
 
 ### Input / Textarea
+- 배경 `rgba(0,0,0,0.5)` 또는 `rgba(0,0,0,0.7)`
+- 보더 `rgba(255,255,255,0.10)`
+- Focus 보더 `#40a5cd`
 
-- 배경: `bg-black/20` 또는 `bg-white/[0.03]`
-- 테두리: `border-white/5`
-- 포커스: 배경/테두리 약한 강화 (`focus:bg-white/[0.07]`, `focus:border-white/10`)
-- 플레이스홀더는 저대비 (`placeholder:text-zinc-700`) 유지
+## 5. Photographer-Specific Rules
 
-### Buttons
+- 숫자 접두사 제목(`1.`, `2.` 등) 사용 금지.
+- Subject/Camera/Temp는 분리 카드가 아니라 하나의 카드로 합친다.
+- Archive 전환 버튼은 썸네일 정렬 전환이 아니라
+  - Viewport + Archive 패널 분할 방향(H/V) 전환으로 동작해야 한다.
+- 앱 배경은 네이비 그라데이션 금지, 항상 `#050505` 고정.
 
-- Primary CTA: `bg-[#40a5cd] hover:bg-[#358eb0] text-white`
-- Danger/Cancel: red 계열 반투명 배경 사용
-- Disabled: `disabled:opacity-50` 기본
-- 버튼 타이포는 가능한 `font-black uppercase`
+## 6. Consistency Checklist
 
-### Icon Buttons
-
-- 배경 기본 약하게 (`bg-black/20`)
-- hover 시 명확한 피드백 (`hover:bg-black/90`, `hover:text-white`)
-- 도구성 버튼은 크기/패딩 일관 유지 (`p-3` 계열)
-
-## 5. Interaction Rules
-
-- 로딩 상태는 스피너 + 대문자 상태 텍스트 조합 유지
-- 생성/업스케일/추출/번역 동시 실행 방지
-- 에러 메시지는 하단 CTA 근처, 붉은 패널 형태로 표시
-- 성공 상태는 과한 토스트 대신 다음 상태(결과 표시)로 전달
-
-## 6. Content & Copy Rules
-
-- 섹션명: 영문 대문자 형식 유지 (`OUTPUT SETTINGS`, `PROMPT PREVIEW`)
-- 버튼 텍스트: 짧고 동사 중심 (`GENERATE`, `EXTRACT`, `SAVE`, `OPEN`)
-- 기술 입력 필드(키/모델)는 사용자가 즉시 이해 가능한 용어 사용
-- 오류 문구는 짧고 행동 지시 포함
-
-## 7. New Feature Checklist
-
-- 패널 배경/보더가 기존 규칙과 동일한가
-- 타이포 스케일(`10px`, `12px`, `xs`)을 벗어나지 않았는가
-- Primary 색상은 `#40a5cd` 계열만 사용했는가
-- Disabled/Loading/Error 상태가 모두 정의되었는가
-- 마우스 hover/active 피드백이 기존과 톤이 맞는가
-- 모바일/작은 화면에서 패널 overflow가 깨지지 않는가
-
-## 8. Do / Don't
-
-- Do: 기존 패턴을 재사용하고, 새 패턴은 최소 단위로 추가
-- Do: 기능이 늘어도 시각적 리듬(간격/테두리/타이포) 유지
-- Don't: 임의 색상 추가, 과도한 그래디언트, 강한 글로우 남발
-- Don't: 패널마다 다른 스타일 시스템 도입
-
-## 9. Implementation Note
-
-- 이 문서가 우선이며, 예외가 필요하면 먼저 문서에 토큰/패턴을 추가한 뒤 코드 반영
-- 추후 컴포넌트 분리 시 `tokens.ts` 또는 `ui/theme.ts`로 이 토큰을 코드화할 것
-
-## 10. Multi-App Tabs
-
-- 좌측 App Hub는 아이콘 기반 탭 전환 구조를 유지
-- 탭별 앱을 iframe으로 탑재할 때는 외곽 컨테이너를 기존 패널 스타일(`bg-zinc-900/30`, `border-white/5`, `rounded-[5px]`)로 감싸기
-- 외부/이관 앱 스타일은 최소한 아래 토큰을 맞추기:
-`#050505` 배경, `#40a5cd` 포인트, Inter 기반 타이포
-- 비율(Aspect Ratio) 선택 UI는 가능하면 `21:9 ~ 9:21` 9개 프리셋을 컨셉충과 동일하게 유지
+- 패널 간 간격이 모두 `10px`인가?
+- 제목/소제목 폰트가 모두 동일한가?
+- 최상위 바깥 프레임이 없는가?
+- Primary 색상이 `#40a5cd` 계열로 통일되었는가?
+- 숫자 접두사 제목이 남아있지 않은가?
+- 2열 H/V 전환이 Viewport/Archive 패널에 실제 적용되는가?

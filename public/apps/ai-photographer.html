@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +10,7 @@
     
     <style>
         :root {
-            --bg-color: #06090f;
+            --bg-color: #050505;
             --panel-color: rgba(24, 24, 27, 0.45);
             --accent-color: #40a5cd;
             --text-color: #e4e4e7;
@@ -18,7 +18,7 @@
         }
 
         body {
-            background: radial-gradient(1200px 600px at 55% 10%, rgba(24, 60, 110, 0.26), transparent 60%), var(--bg-color);
+            background: var(--bg-color);
             color: var(--text-color);
             font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
             overflow: hidden; 
@@ -37,6 +37,23 @@
             border: 1px solid var(--line-color);
             border-radius: 5px;
             backdrop-filter: blur(3px);
+        }
+
+        .panel-title {
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: rgb(113 113 122);
+            line-height: 1;
+        }
+        .panel-subtitle {
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: rgb(113 113 122);
+            line-height: 1;
         }
 
         #viewport-wrapper {
@@ -240,32 +257,28 @@
     <div id="studioLayout" class="flex gap-[10px] h-screen items-stretch p-[10px]">
 
         <!-- COL 1 (300px) : Subject, Camera, Temp -->
-        <div class="w-[300px] flex-none flex flex-col gap-3 scroll-col">
-            
-            <!-- 1. Subject & 1-1. Style -->
-            <div class="card p-4 space-y-3">
-                <label class="text-lg font-bold text-gray-200 uppercase">1. Subject</label>
-                <div class="grid grid-cols-3 gap-2" id="subjectGrid"></div>
-                <div class="pt-2 border-t border-gray-700">
-                    <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">1-1. Style</label>
-                    <div class="grid grid-cols-2 gap-2" id="subModeGrid"></div>
+        <div class="w-[300px] flex-none h-full">
+            <div class="card p-3 h-full overflow-y-auto">
+                <div class="space-y-3">
+                    <label class="panel-title block">Subject</label>
+                    <div class="grid grid-cols-3 gap-2" id="subjectGrid"></div>
+                    <div class="pt-2 border-t border-white/10">
+                        <label class="panel-subtitle mb-2 block">Style</label>
+                        <div class="grid grid-cols-2 gap-2" id="subModeGrid"></div>
+                    </div>
                 </div>
-            </div>
-
-            <!-- 4. Camera (Moved to Left in v25) -->
-            <div class="card p-4 space-y-3">
-                <label class="text-lg font-bold text-gray-200 uppercase">4. Camera</label>
-                <div class="grid grid-cols-2 gap-2" id="cameraGrid"></div>
-            </div>
-
-            <!-- 5. Temp (Moved to Left in v25) -->
-            <div class="card p-4 space-y-2">
-                <div class="flex justify-between items-center w-full mb-1">
-                    <label class="text-lg font-bold text-gray-200 uppercase">5. Temp</label>
-                    <span id="tempDisplayCombined" class="text-sm font-bold font-mono transition-colors text-orange-400">5500K - Daylight</span>
+                <div class="pt-3 mt-3 border-t border-white/10">
+                    <label class="panel-title block mb-3">Camera</label>
+                    <div class="grid grid-cols-2 gap-2" id="cameraGrid"></div>
                 </div>
-                <input type="range" id="tempSlider" min="1500" max="10000" value="5500" step="100" class="kelvin-track">
-                <div class="spectrum-bar"></div>
+                <div class="pt-3 mt-3 border-t border-white/10 space-y-2">
+                    <div class="flex justify-between items-center w-full mb-1">
+                        <label class="panel-title">Temp</label>
+                        <span id="tempDisplayCombined" class="text-sm font-bold font-mono transition-colors text-orange-400">5500K - Daylight</span>
+                    </div>
+                    <input type="range" id="tempSlider" min="1500" max="10000" value="5500" step="100" class="kelvin-track">
+                    <div class="spectrum-bar"></div>
+                </div>
             </div>
         </div>
 
@@ -293,7 +306,7 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <button id="archiveModeBtn" class="text-zinc-500 hover:text-white text-[10px] border border-white/10 rounded px-1.5 py-0.5 transition">H</button>
-                        <label class="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Archive</label>
+                        <label class="panel-title">Archive</label>
                     </div>
                 </div>
                 <div id="archiveGrid" class="flex-1 overflow-y-auto pr-1"></div>
@@ -301,18 +314,18 @@
         </div>
 
         <!-- COL 3 (300px) : Ratio, Lens, Effects -->
-        <div class="w-[300px] flex-none flex flex-col gap-3 scroll-col">
+        <div class="w-[300px] flex-none flex flex-col gap-[10px] scroll-col">
             
             <!-- 2. Ratio (Moved to Right in v25) -->
-            <div class="card p-4 space-y-3">
-                <label class="text-lg font-bold text-gray-200 uppercase">2. Ratio</label>
+            <div class="card p-3 space-y-3">
+                <label class="panel-title block">Ratio</label>
                 <div class="grid grid-cols-3 gap-2" id="ar-grid"></div>
             </div>
 
             <!-- 3. Lens (Moved to Right in v25) -->
-            <div class="card p-4 space-y-4">
+            <div class="card p-3 space-y-4">
                 <div class="flex justify-between items-center">
-                    <label class="text-lg font-bold text-gray-200 uppercase">3. Lens</label>
+                    <label class="panel-title">Lens</label>
                     <div class="flex items-center gap-1">
                         <input type="number" id="customFocal" class="custom-input" value="35">
                         <span class="text-xs text-gray-500">mm</span>
@@ -328,8 +341,8 @@
             </div>
 
             <!-- 6. Effects -->
-            <div class="card p-4 space-y-4">
-                <label class="text-lg font-bold text-gray-200 uppercase border-b border-gray-700 pb-2 block">6. Effects</label>
+            <div class="card p-3 space-y-4">
+                <label class="panel-title border-b border-white/10 pb-2 block">Effects</label>
                 <div class="grid grid-cols-2 gap-y-6 gap-x-2">
                     <div class="knob-container" id="knob-aperture"><span class="text-[10px] font-bold text-gray-400 mb-1">Aperture</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-aperture">f/8</div><div class="knob-sub-label" id="sub-aperture">Std</div></div>
                     <div class="knob-container" id="knob-shutter"><span class="text-[10px] font-bold text-gray-400 mb-1">Shutter</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-shutter">1/250</div><div class="knob-sub-label" id="sub-shutter">Std</div></div>
@@ -343,17 +356,17 @@
         <div class="w-[300px] flex-none flex flex-col h-full">
             <div class="card p-3 flex flex-col h-full overflow-hidden gap-3">
                 <div>
-                    <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Subject Prompt</label>
+                    <label class="panel-title">Subject Prompt</label>
                     <textarea id="subjectDetail" placeholder="사진 프롬프트를 직접 입력하세요..." 
                     class="w-full bg-black/50 border border-white/10 rounded text-sm p-2 text-white focus:border-[#40a5cd] outline-none mt-2 resize-none h-40"></textarea>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Preview</label>
+                    <label class="panel-title">Preview</label>
                     <div id="compositionTags" class="flex flex-wrap gap-1 mt-1 max-h-16 overflow-y-auto"></div>
                 </div>
                 <div class="flex-grow flex flex-col min-h-0">
                     <div class="flex items-center justify-between mb-2">
-                        <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">String</label>
+                        <label class="panel-title">String</label>
                         <button id="copyBtn" class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
                             Copy Prompt
                         </button>
@@ -413,7 +426,11 @@
         };
         const getImg = (id) => IMAGES[id] || IMAGES['canon'];
 
-        const SUBJECTS = [{id:'human',label:'인물',img:'human'},{id:'product',label:'제품',img:'product'},{id:'landscape',label:'배경',img:'landscape'}];
+        const SUBJECTS = [
+            { id: 'human', label: '인물', img: 'human' },
+            { id: 'product', label: '제품', img: 'product' },
+            { id: 'landscape', label: '배경', img: 'landscape' }
+        ];
         
         const SUB_MODES = {
             human: [
@@ -622,7 +639,7 @@
                 const card = document.createElement('div');
                 card.className = `archive-thumb ${index === 0 ? 'active' : ''}`;
                 card.innerHTML = `
-                    <button class="archive-delete" title="Delete">×</button>
+                    <button class="archive-delete" title="Delete">횞</button>
                     <img src="${item.url}" class="w-full aspect-square object-cover block" alt="" />
                     <div class="text-[9px] text-gray-400 py-1 bg-black/40 text-center">${item.duration}s</div>
                 `;
@@ -678,13 +695,13 @@
             showGenError('');
             const prompt = $('finalOutput').value.trim();
             if (!prompt) {
-                showGenError('프롬프트가 비어 있습니다.');
+                showGenError('?꾨＼?꾪듃媛 鍮꾩뼱 ?덉뒿?덈떎.');
                 return;
             }
 
             const credential = localStorage.getItem('conceptbug_api_credential') || '';
             if (!credential) {
-                showGenError('API 키가 없습니다. 컨셉충 탭에서 먼저 입력해 주세요.');
+                showGenError('API ?ㅺ? ?놁뒿?덈떎. 而⑥뀎異???뿉??癒쇱? ?낅젰??二쇱꽭??');
                 return;
             }
 
@@ -727,7 +744,7 @@
                 renderArchive();
                 openResultModal(imageUrl, fileName);
             } catch (error) {
-                showGenError(error?.message || '이미지 생성 중 오류가 발생했습니다.');
+                showGenError(error?.message || '?대?吏 ?앹꽦 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.');
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
@@ -798,7 +815,7 @@
                     <img src="${getImg(sub.img)}" alt="${sub.label}">
                     <div class="visual-label">${sub.label}</div>
                     <div class="visual-overlay bg-black/80">
-                        <div class="visual-desc">${sub.label} 설정</div>
+                        <div class="visual-desc">${sub.label} ?ㅼ젙</div>
                     </div>
                 `;
                 card.onclick = () => { 
@@ -1396,4 +1413,6 @@
     </script>
 </body>
 </html>
+
+
 

@@ -730,9 +730,8 @@ const App: React.FC = () => {
         style.textContent = `
           header { display: none !important; }
           .creator-sig { display: none !important; }
-          body { min-width: 0 !important; padding: 8px !important; }
-          body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch { height: calc(100vh - 16px) !important; gap: 8px !important; }
-          body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch > div.flex-grow.h-full.min-w-0 { flex: 1 1 auto !important; min-width: 0 !important; }
+          body { min-width: 0 !important; padding: 0 !important; margin: 0 !important; }
+          #studioLayout { height: 100vh !important; }
         `;
         frameDoc.head.appendChild(style);
       }
@@ -1193,15 +1192,13 @@ const App: React.FC = () => {
       </main>
       ) : activeAppTab === 'photographer' ? (
       <main className="flex-1 h-full overflow-hidden">
-        <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
-          <iframe
-            ref={photographerFrameRef}
-            onLoad={handlePhotographerFrameLoad}
-            title="AI Photographer"
-            src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
-            className="w-full h-full border border-white/5 rounded-[5px] bg-black"
-          />
-        </section>
+        <iframe
+          ref={photographerFrameRef}
+          onLoad={handlePhotographerFrameLoad}
+          title="AI Photographer"
+          src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
+          className="w-full h-full border-0 bg-transparent"
+        />
       </main>
       ) : (
       <main className="flex-1 h-full overflow-hidden">
