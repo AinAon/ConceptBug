@@ -121,6 +121,15 @@ const App: React.FC = () => {
   const COL2_WIDTH = "15%";
   const COL4_WIDTH = "12%"; 
 
+  const APP_TABS = [
+    { id: 'conceptbug', name: '컨셉충', description: '현재 작업 중인 이미지 생성 툴' },
+    { id: 'photographer', name: 'AI포토그래퍼', description: '실사사진 촬영 앱 (준비 중)' },
+    { id: 'storybuilder', name: '스토리빌더', description: '스토리보드 / 콘티 생성 툴 (준비 중)' },
+    { id: 'charactersheet', name: '캐릭터시트', description: '페이셜 턴어라운드 시트 (준비 중)' },
+    { id: 'fittingroom', name: '피팅룸', description: '의상 교체 / 스타일링 툴 (준비 중)' },
+  ] as const;
+
+  const [activeAppTab, setActiveAppTab] = useState<(typeof APP_TABS)[number]['id']>('conceptbug');
   const [appPassword, setAppPassword] = useState('');
   const [isPasswordConfirmed, setIsPasswordConfirmed] = useState(false);
   const [isArchiveSide, setIsArchiveSide] = useState(false);
@@ -667,6 +676,27 @@ const App: React.FC = () => {
 
   return (
     <div className={`h-screen text-zinc-200 font-['Inter'] flex overflow-hidden p-[10px] gap-[10px] relative transition-colors duration-500 bg-[#050505]`}>
+      <aside className="w-[180px] shrink-0 h-full bg-zinc-900/40 border border-white/5 rounded-[5px] p-3 flex flex-col gap-2">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 px-1">APP HUB</h2>
+        <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2">
+          {APP_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveAppTab(tab.id)}
+              className={`w-full text-left rounded-xl border px-3 py-2.5 transition-all ${
+                activeAppTab === tab.id
+                  ? 'bg-[#40a5cd]/20 border-[#40a5cd]/40 text-white shadow-2xl'
+                  : 'bg-white/[0.03] border-white/5 text-zinc-400 hover:text-white hover:border-white/15'
+              }`}
+            >
+              <div className="text-[11px] font-black uppercase tracking-wider">{tab.name}</div>
+              <div className="text-[9px] mt-1 opacity-70 leading-relaxed">{tab.description}</div>
+            </button>
+          ))}
+        </div>
+      </aside>
+
+      {activeAppTab === 'conceptbug' ? (
       <main className="flex-1 flex gap-[10px] h-full overflow-hidden">
         <div style={{ width: COL4_WIDTH }} className="flex flex-col gap-[10px] shrink-0 h-full">
           <section className="bg-zinc-900/40 border border-white/5 rounded-[5px] p-2 flex flex-col gap-2 relative">
@@ -962,6 +992,20 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+      ) : (
+      <main className="flex-1 h-full overflow-hidden">
+        <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-6 flex items-center justify-center">
+          <div className="max-w-xl w-full bg-zinc-900/40 border border-white/10 rounded-2xl p-8 text-center">
+            <h1 className="text-[16px] font-black tracking-[0.2em] uppercase text-white mb-3">
+              {APP_TABS.find((tab) => tab.id === activeAppTab)?.name}
+            </h1>
+            <p className="text-[11px] text-zinc-400 leading-relaxed">
+              이 탭은 아직 비어 있습니다. 다음 단계에서 기능을 추가할 예정입니다.
+            </p>
+          </div>
+        </section>
+      </main>
+      )}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
