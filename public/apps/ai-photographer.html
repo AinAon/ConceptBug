@@ -55,6 +55,17 @@
             color: rgb(113 113 122);
             line-height: 1;
         }
+        .title-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .title-icon {
+            width: 12px;
+            height: 12px;
+            color: rgb(113 113 122);
+            opacity: 0.95;
+        }
 
         #viewport-wrapper {
             position: relative;
@@ -260,20 +271,40 @@
         <div class="w-[300px] flex-none h-full">
             <div class="card p-3 h-full overflow-y-auto">
                 <div class="space-y-3">
-                    <label class="panel-title block">Subject</label>
+                    <label class="panel-title block">
+                        <span class="title-row">
+                            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c2-4 14-4 16 0"/></svg>
+                            Subject
+                        </span>
+                    </label>
                     <div class="grid grid-cols-3 gap-2" id="subjectGrid"></div>
                     <div class="pt-2 border-t border-white/10">
-                        <label class="panel-subtitle mb-2 block">Style</label>
+                        <label class="panel-subtitle mb-2 block">
+                            <span class="title-row">
+                                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v4"/><path d="M6.5 6.5l2.8 2.8"/><path d="M3 12h4"/><path d="M6.5 17.5l2.8-2.8"/><path d="M12 17v4"/><path d="M17.5 17.5l-2.8-2.8"/><path d="M17 12h4"/><path d="M17.5 6.5l-2.8 2.8"/></svg>
+                                Style
+                            </span>
+                        </label>
                         <div class="grid grid-cols-2 gap-2" id="subModeGrid"></div>
                     </div>
                 </div>
                 <div class="pt-3 mt-3 border-t border-white/10">
-                    <label class="panel-title block mb-3">Camera</label>
+                    <label class="panel-title block mb-3">
+                        <span class="title-row">
+                            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h4l2-2h4l2 2h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                            Camera
+                        </span>
+                    </label>
                     <div class="grid grid-cols-2 gap-2" id="cameraGrid"></div>
                 </div>
                 <div class="pt-3 mt-3 border-t border-white/10 space-y-2">
                     <div class="flex justify-between items-center w-full mb-1">
-                        <label class="panel-title">Temp</label>
+                        <label class="panel-title">
+                            <span class="title-row">
+                                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2 2 0 0 0-4 0v11.26a4 4 0 1 0 4 0z"/><path d="M12 9v7"/></svg>
+                                Temp
+                            </span>
+                        </label>
                         <span id="tempDisplayCombined" class="text-sm font-bold font-mono transition-colors text-orange-400">5500K - Daylight</span>
                     </div>
                     <input type="range" id="tempSlider" min="1500" max="10000" value="5500" step="100" class="kelvin-track">
@@ -305,8 +336,18 @@
             <section id="archivePanel" class="card p-3 flex flex-col gap-2 overflow-hidden" style="height:33%;">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <button id="archiveModeBtn" class="text-zinc-500 hover:text-white text-[10px] border border-white/10 rounded px-1.5 py-0.5 transition">H</button>
-                        <label class="panel-title">Archive</label>
+                        <button id="archiveModeBtn" class="text-zinc-500 hover:text-white text-[10px] border border-white/10 rounded p-1 transition" title="Toggle archive orientation">
+                            <svg id="archiveModeIcon" class="w-3.5 h-3.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect>
+                                <circle cx="12" cy="17.5" r="0.8"></circle>
+                            </svg>
+                        </button>
+                        <label class="panel-title">
+                            <span class="title-row">
+                                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+                                Archive
+                            </span>
+                        </label>
                     </div>
                 </div>
                 <div id="archiveGrid" class="flex-1 overflow-y-auto pr-1"></div>
@@ -314,18 +355,28 @@
         </div>
 
         <!-- COL 3 (300px) : Ratio, Lens, Effects -->
-        <div class="w-[300px] flex-none flex flex-col gap-[10px] scroll-col">
+        <div class="w-[300px] flex-none h-full flex flex-col gap-[10px] min-h-0">
             
             <!-- 2. Ratio (Moved to Right in v25) -->
             <div class="card p-3 space-y-3">
-                <label class="panel-title block">Ratio</label>
+                <label class="panel-title block">
+                    <span class="title-row">
+                        <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10"/><path d="M7 15h6"/></svg>
+                        Output Settings
+                    </span>
+                </label>
                 <div class="grid grid-cols-3 gap-2" id="ar-grid"></div>
             </div>
 
             <!-- 3. Lens (Moved to Right in v25) -->
             <div class="card p-3 space-y-4">
                 <div class="flex justify-between items-center">
-                    <label class="panel-title">Lens</label>
+                    <label class="panel-title">
+                        <span class="title-row">
+                            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M3 12h2"/><path d="M19 12h2"/></svg>
+                            Lens
+                        </span>
+                    </label>
                     <div class="flex items-center gap-1">
                         <input type="number" id="customFocal" class="custom-input" value="35">
                         <span class="text-xs text-gray-500">mm</span>
@@ -341,9 +392,14 @@
             </div>
 
             <!-- 6. Effects -->
-            <div class="card p-3 space-y-4">
-                <label class="panel-title border-b border-white/10 pb-2 block">Effects</label>
-                <div class="grid grid-cols-2 gap-y-6 gap-x-2">
+            <div class="card p-3 flex-1 min-h-0 flex flex-col">
+                <label class="panel-title border-b border-white/10 pb-2 block">
+                    <span class="title-row">
+                        <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>
+                        Effects
+                    </span>
+                </label>
+                <div class="grid grid-cols-2 gap-y-6 gap-x-2 pt-4">
                     <div class="knob-container" id="knob-aperture"><span class="text-[10px] font-bold text-gray-400 mb-1">Aperture</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-aperture">f/8</div><div class="knob-sub-label" id="sub-aperture">Std</div></div>
                     <div class="knob-container" id="knob-shutter"><span class="text-[10px] font-bold text-gray-400 mb-1">Shutter</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-shutter">1/250</div><div class="knob-sub-label" id="sub-shutter">Std</div></div>
                     <div class="knob-container" id="knob-vignette"><span class="text-[10px] font-bold text-gray-400 mb-1">Vignette</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-vignette">0%</div><div class="knob-sub-label" id="sub-vignette">None</div></div>
@@ -356,23 +412,38 @@
         <div class="w-[300px] flex-none flex flex-col h-full">
             <div class="card p-3 flex flex-col h-full overflow-hidden gap-3">
                 <div>
-                    <label class="panel-title">Subject Prompt</label>
+                    <label class="panel-title">
+                        <span class="title-row">
+                            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
+                            Subject Prompt
+                        </span>
+                    </label>
                     <textarea id="subjectDetail" placeholder="사진 프롬프트를 직접 입력하세요..." 
-                    class="w-full bg-black/50 border border-white/10 rounded text-sm p-2 text-white focus:border-[#40a5cd] outline-none mt-2 resize-none h-40"></textarea>
+                    class="w-full bg-black/50 border border-white/10 rounded text-sm p-2 text-white focus:border-[#40a5cd] outline-none mt-2 resize-none h-56"></textarea>
                 </div>
                 <div>
-                    <label class="panel-title">Preview</label>
-                    <div id="compositionTags" class="flex flex-wrap gap-1 mt-1 max-h-16 overflow-y-auto"></div>
+                    <label class="panel-title">
+                        <span class="title-row">
+                            <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                            Tags
+                        </span>
+                    </label>
+                    <div id="compositionTags" class="flex flex-wrap gap-1 mt-1 max-h-10 overflow-y-auto"></div>
                 </div>
-                <div class="flex-grow flex flex-col min-h-0">
+                <div class="flex flex-col min-h-0">
                     <div class="flex items-center justify-between mb-2">
-                        <label class="panel-title">String</label>
+                        <label class="panel-title">
+                            <span class="title-row">
+                                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
+                                Prompt Preview
+                            </span>
+                        </label>
                         <button id="copyBtn" class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
                             Copy Prompt
                         </button>
                     </div>
                     <textarea id="finalOutput" readonly 
-                        class="w-full flex-grow bg-black/70 border border-white/10 rounded text-[11px] leading-tight p-3 text-gray-300 font-mono focus:outline-none resize-none mb-3"></textarea>
+                        class="w-full h-28 bg-white/[0.03] border border-white/5 rounded text-[10px] leading-[1.6] p-3 text-white/20 font-mono focus:outline-none resize-none mb-3"></textarea>
                     <button id="generateBtn" class="w-full mt-auto bg-[#40a5cd] hover:bg-[#358eb0] text-white py-3 rounded font-black text-sm transition-all active:scale-95 shadow-lg uppercase tracking-[0.2em] shrink-0">
                         Generate
                     </button>
@@ -660,6 +731,7 @@
             const viewportPanel = $('viewportPanel');
             const archivePanel = $('archivePanel');
             const divider = $('centerDivider');
+            const archiveModeIcon = $('archiveModeIcon');
             if (!centerSplit || !viewportPanel || !archivePanel || !divider) return;
 
             if (archiveSideMode) {
@@ -671,6 +743,7 @@
                 viewportPanel.style.height = '100%';
                 archivePanel.style.width = `${100 - splitPercent}%`;
                 archivePanel.style.height = '100%';
+                if (archiveModeIcon) archiveModeIcon.style.transform = 'rotate(90deg)';
             } else {
                 centerSplit.classList.remove('flex-row');
                 centerSplit.classList.add('flex-col');
@@ -680,13 +753,13 @@
                 viewportPanel.style.height = `${splitPercent}%`;
                 archivePanel.style.width = '100%';
                 archivePanel.style.height = `${100 - splitPercent}%`;
+                if (archiveModeIcon) archiveModeIcon.style.transform = 'rotate(0deg)';
             }
             resizeViewport();
         }
 
         function toggleArchiveMode() {
             archiveSideMode = !archiveSideMode;
-            $('archiveModeBtn').textContent = archiveSideMode ? 'V' : 'H';
             applyCenterSplitMode();
             renderArchive();
         }
@@ -815,7 +888,7 @@
                     <img src="${getImg(sub.img)}" alt="${sub.label}">
                     <div class="visual-label">${sub.label}</div>
                     <div class="visual-overlay bg-black/80">
-                        <div class="visual-desc">${sub.label} ?ㅼ젙</div>
+                        <div class="visual-desc">${sub.label} 설정</div>
                     </div>
                 `;
                 card.onclick = () => { 

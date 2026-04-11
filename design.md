@@ -25,6 +25,10 @@
   - `letter-spacing: 0.3em`
   - `line-height: 1`
   - `color: rgb(113 113 122)`
+- Panel Title Icon:
+  - 제목 앞 12px 선 아이콘 사용
+  - 아이콘 색상은 제목과 동일(`rgb(113 113 122)`)
+  - 아이콘+텍스트 간격 `8px`
 - CTA Button Text:
   - `font-size: 12px`
   - `font-weight: 900`
@@ -91,9 +95,13 @@
 
 - 숫자 접두사 제목(`1.`, `2.` 등) 사용 금지.
 - Subject/Camera/Temp는 분리 카드가 아니라 하나의 카드로 합친다.
+- Archive 버튼은 텍스트(H/V) 대신 기기 회전 아이콘 버튼 사용.
 - Archive 전환 버튼은 썸네일 정렬 전환이 아니라
   - Viewport + Archive 패널 분할 방향(H/V) 전환으로 동작해야 한다.
 - 앱 배경은 네이비 그라데이션 금지, 항상 `#050505` 고정.
+- 3열 패널은 `Output Settings / Lens / Effects` 구성으로 유지하고,
+  - `Effects` 패널은 하단까지 채우는 `flex-1` 구조를 사용한다.
+- 우측 문자열 영역은 `PROMPT PREVIEW` 이름과 컨셉충 `PROMPT PREVIEW` 타이포/컬러 스타일을 따른다.
 
 ## 6. Consistency Checklist
 
