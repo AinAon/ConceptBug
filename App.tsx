@@ -122,11 +122,11 @@ const App: React.FC = () => {
   const COL4_WIDTH = "12%"; 
 
   const APP_TABS = [
-    { id: 'conceptbug', name: '컨셉충', description: '현재 작업 중인 이미지 생성 툴' },
-    { id: 'photographer', name: 'AI포토그래퍼', description: '실사사진 촬영 앱 (준비 중)' },
-    { id: 'storybuilder', name: '스토리빌더', description: '스토리보드 / 콘티 생성 툴 (준비 중)' },
-    { id: 'charactersheet', name: '캐릭터시트', description: '페이셜 턴어라운드 시트 (준비 중)' },
-    { id: 'fittingroom', name: '피팅룸', description: '의상 교체 / 스타일링 툴 (준비 중)' },
+    { id: 'conceptbug', name: '컨셉충', description: '현재 작업 중인 이미지 생성 툴', icon: Sparkles },
+    { id: 'photographer', name: 'AI포토그래퍼', description: '실사사진 촬영 앱 (준비 중)', icon: Camera },
+    { id: 'storybuilder', name: '스토리빌더', description: '스토리보드 / 콘티 생성 툴 (준비 중)', icon: Building2 },
+    { id: 'charactersheet', name: '캐릭터시트', description: '페이셜 턴어라운드 시트 (준비 중)', icon: UserCircle },
+    { id: 'fittingroom', name: '피팅룸', description: '의상 교체 / 스타일링 툴 (준비 중)', icon: Paintbrush },
   ] as const;
 
   const [activeAppTab, setActiveAppTab] = useState<(typeof APP_TABS)[number]['id']>('conceptbug');
@@ -676,21 +676,20 @@ const App: React.FC = () => {
 
   return (
     <div className={`h-screen text-zinc-200 font-['Inter'] flex overflow-hidden p-[10px] gap-[10px] relative transition-colors duration-500 bg-[#050505]`}>
-      <aside className="w-[180px] shrink-0 h-full bg-zinc-900/40 border border-white/5 rounded-[5px] p-3 flex flex-col gap-2">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 px-1">APP HUB</h2>
+      <aside className="w-[68px] shrink-0 h-full bg-zinc-900/40 border border-white/5 rounded-[5px] p-2 flex flex-col gap-2">
         <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2">
           {APP_TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveAppTab(tab.id)}
-              className={`w-full text-left rounded-xl border px-3 py-2.5 transition-all ${
+              title={tab.name}
+              className={`w-full h-[44px] rounded-xl border transition-all flex items-center justify-center ${
                 activeAppTab === tab.id
                   ? 'bg-[#40a5cd]/20 border-[#40a5cd]/40 text-white shadow-2xl'
                   : 'bg-white/[0.03] border-white/5 text-zinc-400 hover:text-white hover:border-white/15'
               }`}
             >
-              <div className="text-[11px] font-black uppercase tracking-wider">{tab.name}</div>
-              <div className="text-[9px] mt-1 opacity-70 leading-relaxed">{tab.description}</div>
+              <tab.icon size={18} />
             </button>
           ))}
         </div>
