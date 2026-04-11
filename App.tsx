@@ -674,6 +674,8 @@ const App: React.FC = () => {
     setIsPasswordConfirmed(true);
   };
 
+  const selectedTab = APP_TABS.find((tab) => tab.id === activeAppTab);
+
   return (
     <div className={`h-screen text-zinc-200 font-['Inter'] flex overflow-hidden p-[10px] gap-[10px] relative transition-colors duration-500 bg-[#050505]`}>
       <aside className="w-[68px] shrink-0 h-full bg-zinc-900/40 border border-white/5 rounded-[5px] p-2 flex flex-col gap-2">
@@ -991,12 +993,22 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+      ) : activeAppTab === 'photographer' ? (
+      <main className="flex-1 h-full overflow-hidden">
+        <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-2">
+          <iframe
+            title="AI Photographer"
+            src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
+            className="w-full h-full border border-white/5 rounded-[5px] bg-black"
+          />
+        </section>
+      </main>
       ) : (
       <main className="flex-1 h-full overflow-hidden">
         <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-6 flex items-center justify-center">
           <div className="max-w-xl w-full bg-zinc-900/40 border border-white/10 rounded-2xl p-8 text-center">
             <h1 className="text-[16px] font-black tracking-[0.2em] uppercase text-white mb-3">
-              {APP_TABS.find((tab) => tab.id === activeAppTab)?.name}
+              {selectedTab?.name}
             </h1>
             <p className="text-[11px] text-zinc-400 leading-relaxed">
               이 탭은 아직 비어 있습니다. 다음 단계에서 기능을 추가할 예정입니다.
