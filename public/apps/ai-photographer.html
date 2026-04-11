@@ -201,6 +201,37 @@
         .creator-sig {
             position: fixed; bottom: 8px; left: 12px; font-size: 10px; color: #4a5568; font-family: sans-serif; pointer-events: none; opacity: 0.6; z-index: 50;
         }
+        .archive-thumb {
+            position: relative;
+            border: 1px solid #2d3748;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #000;
+            transition: border-color 0.2s;
+        }
+        .archive-thumb:hover { border-color: #4a5568; }
+        .archive-thumb.active {
+            border-color: #e2e8f0;
+            box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.25);
+        }
+        .archive-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 1px solid #2d3748;
+            background: rgba(0, 0, 0, 0.66);
+            color: #fff;
+            font-size: 11px;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+        .archive-thumb:hover .archive-delete { opacity: 1; }
+        .archive-delete:hover { background: rgba(239, 68, 68, 0.9); }
     </style>
 </head>
 <body class="p-2 lg:p-4 w-full h-screen min-w-[1280px]">
@@ -246,20 +277,31 @@
             </div>
         </div>
 
-        <!-- COL 2: Viewport -->
-        <div class="flex-grow h-full min-w-0">
-            <div id="viewport-wrapper">
-                <div id="viewport-container">
-                    <div id="grid-overlay">
-                        <div class="grid-line-v" style="left: 33.3%;"></div><div class="grid-line-v" style="left: 66.6%;"></div>
-                        <div class="grid-line-h" style="top: 33.3%;"></div><div class="grid-line-h" style="top: 66.6%;"></div>
-                    </div>
-                    <button class="vp-btn right-2" onclick="resetCamera()">??Reset</button>
-                    <button class="vp-btn left-2" id="gridBtn" onclick="toggleGrid()"># Grid</button>
-                    <div class="absolute bottom-2 left-2 text-xs font-mono text-cyan-300 bg-black/50 px-2 py-1 rounded pointer-events-none z-10">
-                        <span id="debug-angle">Front</span> | <span id="debug-comp">Center</span>
+        <!-- COL 2: Viewport + Archive -->
+        <div class="flex-grow h-full min-w-0 flex flex-col gap-3">
+            <div class="flex-1 min-h-0">
+                <div id="viewport-wrapper">
+                    <div id="viewport-container">
+                        <div id="grid-overlay">
+                            <div class="grid-line-v" style="left: 33.3%;"></div><div class="grid-line-v" style="left: 66.6%;"></div>
+                            <div class="grid-line-h" style="top: 33.3%;"></div><div class="grid-line-h" style="top: 66.6%;"></div>
+                        </div>
+                        <button class="vp-btn right-2" onclick="resetCamera()">??Reset</button>
+                        <button class="vp-btn left-2" id="gridBtn" onclick="toggleGrid()"># Grid</button>
+                        <div class="absolute bottom-2 left-2 text-xs font-mono text-cyan-300 bg-black/50 px-2 py-1 rounded pointer-events-none z-10">
+                            <span id="debug-angle">Front</span> | <span id="debug-comp">Center</span>
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="card p-3 h-[210px] flex flex-col gap-3 overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <button id="archiveModeBtn" class="text-gray-500 hover:text-white text-xs border border-gray-700 rounded px-1.5 py-0.5 transition">↔</button>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-[0.3em]">Archive</label>
+                    </div>
+                </div>
+                <div id="embedArchiveGrid" class="flex-1 overflow-y-auto pr-1"></div>
             </div>
         </div>
 
@@ -367,7 +409,7 @@
         };
         const getImg = (id) => IMAGES[id] || IMAGES['canon'];
 
-        const SUBJECTS = [{id:'human',label:'?�물',img:'human'},{id:'product',label:'?�품',img:'product'},{id:'landscape',label:'배경',img:'landscape'}];
+        const SUBJECTS = [{id:'human',label:'?몃Ъ',img:'human'},{id:'product',label:'?쒗뭹',img:'product'},{id:'landscape',label:'諛곌꼍',img:'landscape'}];
         
         const SUB_MODES = {
             human: [
@@ -403,7 +445,7 @@
 
         const FOCAL_STEPS = [8, 16, 24, 35, 50, 85, 200];
         const FOCAL_KW = {
-            8: "extreme fisheye distortion, spherical warping, 180° panoramic field of view",
+            8: "extreme fisheye distortion, spherical warping, 180째 panoramic field of view",
             16: "ultra-wide angle perspective, dramatic depth exaggeration, expansive environmental context",
             24: "wide angle framing, environmental storytelling, noticeable perspective pull",
             35: "natural street photography perspective, balanced proportions, classic documentary look",
@@ -434,6 +476,8 @@
         };
 
         let scene, camera, renderer, controls;
+        let archiveVertical = false;
+        let archiveItems = [];
         let subjects = {}, mainLight, ambientLight;
         const $ = id => document.getElementById(id);
 
@@ -515,8 +559,55 @@
 
             $('subjectDetail').addEventListener('input', updatePrompt);
             $('copyBtn').addEventListener('click', () => { $('finalOutput').select(); document.execCommand('copy'); });
+            $('archiveModeBtn')?.addEventListener('click', toggleArchiveMode);
+            window.addEventListener('message', (event) => {
+                const payload = event.data;
+                if (!payload || typeof payload !== 'object') return;
+                if (payload.type !== 'conceptbug_archive_sync') return;
+                archiveItems = Array.isArray(payload.items) ? payload.items : [];
+                renderEmbedArchive();
+            });
             window.addEventListener('resize', resizeViewport);
+            renderEmbedArchive();
             updatePrompt();
+        }
+
+        function renderEmbedArchive() {
+            const grid = $('embedArchiveGrid');
+            if (!grid) return;
+            if (!archiveItems || archiveItems.length === 0) {
+                grid.className = 'flex-1 overflow-y-auto pr-1';
+                grid.innerHTML = '<div class="h-full w-full flex items-center justify-center opacity-10"><span class="font-black uppercase tracking-[0.4em] text-2xl">EMPTY</span></div>';
+                return;
+            }
+            const cols = archiveVertical ? 'grid-cols-1' : 'grid-cols-6';
+            grid.className = `flex-1 overflow-y-auto pr-1 grid gap-2 ${cols}`;
+            grid.innerHTML = '';
+            archiveItems.forEach((item) => {
+                const wrap = document.createElement('div');
+                wrap.className = `archive-thumb ${item.selected ? 'active' : ''}`;
+                wrap.innerHTML = `
+                    <button class="archive-delete" title="Delete">×</button>
+                    <img src="${item.url}" class="w-full aspect-square object-cover block" alt="" />
+                    <div class="text-[9px] text-gray-400 py-1 bg-black/40 text-center">${item.duration}s</div>
+                `;
+                wrap.addEventListener('click', () => {
+                    window.parent.postMessage({ type: 'conceptbug_archive_select', index: item.index }, '*');
+                });
+                const del = wrap.querySelector('.archive-delete');
+                del.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.parent.postMessage({ type: 'conceptbug_archive_delete', index: item.index }, '*');
+                });
+                grid.appendChild(wrap);
+            });
+        }
+
+        function toggleArchiveMode() {
+            archiveVertical = !archiveVertical;
+            const btn = $('archiveModeBtn');
+            if (btn) btn.textContent = archiveVertical ? '↕' : '↔';
+            renderEmbedArchive();
         }
 
         function initDragKnob(id, onChange) {
@@ -1078,9 +1169,9 @@
             else shortAngle = 'Eye Level';
             
             if(absAzi < 10) shortAngle += ' / Front';
-            else if(absAzi < 50) shortAngle += ` / ¾ ${aziDeg > 0 ? 'L' : 'R'}`;
+            else if(absAzi < 50) shortAngle += ` / 쩐 ${aziDeg > 0 ? 'L' : 'R'}`;
             else if(absAzi < 100) shortAngle += ` / Side ${aziDeg > 0 ? 'L' : 'R'}`;
-            else if(absAzi < 150) shortAngle += ' / Rear ¾';
+            else if(absAzi < 150) shortAngle += ' / Rear 쩐';
             else shortAngle += ' / Back';
             
             $('debug-angle').innerText = shortAngle;
@@ -1127,7 +1218,7 @@
             const fl = state.focal;
             let lensDesc = '';
             if(fl <= 10) {
-                lensDesc = `${fl}mm fisheye lens, extreme barrel distortion, ultra-wide 180° field of view, everything in focus`;
+                lensDesc = `${fl}mm fisheye lens, extreme barrel distortion, ultra-wide 180째 field of view, everything in focus`;
             } else if(fl <= 18) {
                 lensDesc = `${fl}mm ultra-wide angle lens, expansive field of view, exaggerated perspective distortion, deep depth of field`;
             } else if(fl <= 28) {

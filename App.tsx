@@ -209,7 +209,6 @@ const App: React.FC = () => {
   const [photoResults, setPhotoResults] = useState<GenerationResult[]>([]);
   const [photoSelectedIndex, setPhotoSelectedIndex] = useState(0);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
-  const [isPhotoArchiveSide, setIsPhotoArchiveSide] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
@@ -732,6 +731,16 @@ const App: React.FC = () => {
         `;
         frameDoc.head.appendChild(style);
       }
+      const frameWindow = photographerFrameRef.current?.contentWindow;
+      if (frameWindow) {
+        const items = photoResults.map((res, idx) => ({
+          url: res.url,
+          duration: res.duration,
+          index: idx,
+          selected: idx === photoSelectedIndex,
+        }));
+        frameWindow.postMessage({ type: 'conceptbug_archive_sync', items }, '*');
+      }
       window.setTimeout(() => {
         try {
           photographerFrameRef.current?.contentWindow?.dispatchEvent(new Event('resize'));
@@ -764,6 +773,38 @@ const App: React.FC = () => {
     if (photoSelectedIndex < photoResults.length) return;
     setPhotoSelectedIndex(0);
   }, [photoResults, photoSelectedIndex]);
+
+  useEffect(() => {
+    const frameWindow = photographerFrameRef.current?.contentWindow;
+    if (!frameWindow) return;
+    const items = photoResults.map((res, idx) => ({
+      url: res.url,
+      duration: res.duration,
+      index: idx,
+      selected: idx === photoSelectedIndex,
+    }));
+    frameWindow.postMessage({ type: 'conceptbug_archive_sync', items }, '*');
+  }, [photoResults, photoSelectedIndex, activeAppTab]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      const payload = event.data;
+      if (!payload || typeof payload !== 'object') return;
+      if (payload.type === 'conceptbug_archive_select') {
+        const idx = Number(payload.index);
+        if (Number.isNaN(idx) || idx < 0 || idx >= photoResults.length) return;
+        setPhotoSelectedIndex(idx);
+        setIsPhotoModalOpen(true);
+      }
+      if (payload.type === 'conceptbug_archive_delete') {
+        const idx = Number(payload.index);
+        if (Number.isNaN(idx) || idx < 0 || idx >= photoResults.length) return;
+        setPhotoResults((prev) => prev.filter((_, pIdx) => pIdx !== idx));
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [photoResults]);
 
   const handlePhotoCopyPrompt = () => {
     if (!photographerPrompt.trim()) return;
@@ -1141,7 +1182,7 @@ const App: React.FC = () => {
       </main>
       ) : activeAppTab === 'photographer' ? (
       <main className="flex-1 grid grid-cols-[minmax(0,1fr)_320px] gap-[10px] h-full overflow-hidden relative">
-        <div className="min-w-0 h-full relative overflow-hidden">
+        <div className="min-w-0 h-full overflow-hidden">
           <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
             <iframe
               ref={photographerFrameRef}
@@ -1150,55 +1191,6 @@ const App: React.FC = () => {
               src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
               className="w-full h-full border border-white/5 rounded-[5px] bg-black"
             />
-          </section>
-
-          <section className="absolute bottom-2 left-[312px] right-[312px] h-[210px] bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden z-20">
-                <div className="flex items-center justify-between shrink-0">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setIsPhotoArchiveSide(!isPhotoArchiveSide)}
-                      className={`p-1 rounded-md transition-all hover:bg-white/5 text-zinc-600 hover:text-white ${isPhotoArchiveSide ? 'text-indigo-400' : ''}`}
-                      title="Toggle Archive View"
-                    >
-                      <Smartphone size={12} className={isPhotoArchiveSide ? 'rotate-90' : ''} />
-                    </button>
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">Archive</h2>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  {photoResults.length === 0 ? (
-                    <div className="h-full flex items-center justify-center opacity-5">
-                      <span className="font-black uppercase text-3xl tracking-tighter">EMPTY</span>
-                    </div>
-                  ) : (
-                    <div className={`grid gap-2 ${isPhotoArchiveSide ? 'grid-cols-1' : 'grid-cols-6'} px-1 pt-1`}>
-                      {photoResults.map((res, idx) => (
-                        <div key={res.timestamp} className="relative group overflow-hidden">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPhotoResults((prev) => prev.filter((_, pIdx) => pIdx !== idx));
-                            }}
-                            className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-500/90 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm shadow-lg active:scale-90"
-                            title="Delete"
-                          >
-                            <X size={10} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setPhotoSelectedIndex(idx);
-                              setIsPhotoModalOpen(true);
-                            }}
-                            className={`w-full border ${photoSelectedIndex === idx ? 'border-white/80 ring-2 ring-white/20' : 'border-white/5 hover:border-white/20'} transition-all`}
-                          >
-                            <img src={res.url} className="w-full aspect-square object-cover block" alt="" />
-                            <div className="text-[9px] text-zinc-400 py-1 bg-black/40">{res.duration}s</div>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
           </section>
         </div>
 
