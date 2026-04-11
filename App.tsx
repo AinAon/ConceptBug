@@ -1141,8 +1141,8 @@ const App: React.FC = () => {
       </main>
       ) : activeAppTab === 'photographer' ? (
       <main className="flex-1 grid grid-cols-[minmax(0,1fr)_320px] gap-[10px] h-full overflow-hidden relative">
-        <div className="min-w-0 h-full grid grid-rows-[minmax(0,1fr)_210px] gap-[10px] overflow-hidden">
-          <section className="min-h-0 bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
+        <div className="min-w-0 h-full relative overflow-hidden">
+          <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
             <iframe
               ref={photographerFrameRef}
               onLoad={handlePhotographerFrameLoad}
@@ -1152,9 +1152,7 @@ const App: React.FC = () => {
             />
           </section>
 
-          <section className="min-h-0 overflow-hidden">
-            <div className="h-full grid grid-cols-[300px_minmax(0,1fr)_300px] gap-2">
-              <div className="col-start-2 h-full bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden">
+          <section className="absolute bottom-2 left-[312px] right-[312px] h-[210px] bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden z-20">
                 <div className="flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-2">
                     <button
@@ -1201,8 +1199,6 @@ const App: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
           </section>
         </div>
 
