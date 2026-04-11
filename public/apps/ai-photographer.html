@@ -10,16 +10,17 @@
     
     <style>
         :root {
-            --bg-color: #050505;
-            --panel-color: #171a21;
+            --bg-color: #06090f;
+            --panel-color: rgba(24, 24, 27, 0.45);
             --accent-color: #40a5cd;
-            --text-color: #e2e8f0;
+            --text-color: #e4e4e7;
+            --line-color: rgba(255, 255, 255, 0.08);
         }
 
         body {
-            background-color: var(--bg-color);
+            background: radial-gradient(1200px 600px at 55% 10%, rgba(24, 60, 110, 0.26), transparent 60%), var(--bg-color);
             color: var(--text-color);
-            font-family: 'Noto Sans KR', sans-serif;
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
             overflow: hidden; 
             height: 100vh;
             display: flex;
@@ -32,9 +33,10 @@
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
 
         .card {
-            background-color: var(--panel-color);
-            border: 1px solid #2d3748;
-            border-radius: 0.75rem;
+            background: var(--panel-color);
+            border: 1px solid var(--line-color);
+            border-radius: 5px;
+            backdrop-filter: blur(3px);
         }
 
         #viewport-wrapper {
@@ -42,8 +44,8 @@
             width: 100%;
             height: 100%;
             background: radial-gradient(circle at center, #2d3748 0%, #000000 100%);
-            border-radius: 0.5rem;
-            border: 1px solid #4a5568;
+            border-radius: 5px;
+            border: 1px solid var(--line-color);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -51,7 +53,7 @@
         }
 
         #viewport-container {
-            border: 2px solid #4a5568; 
+            border: 1px solid rgba(255,255,255,0.22); 
             box-shadow: 0 0 40px rgba(0,0,0,0.8);
             transition: width 0.3s, height 0.3s;
             position: relative;
@@ -71,20 +73,20 @@
 
         .btn-select {
             transition: all 0.2s;
-            border: 1px solid #2d3748;
-            background: #22252d;
-            color: #a0aec0;
+            border: 1px solid var(--line-color);
+            background: rgba(255,255,255,0.03);
+            color: #a1a1aa;
         }
         .btn-select:hover {
             border-color: var(--accent-color);
             color: white;
-            background: #2d3748;
+            background: rgba(255,255,255,0.09);
         }
         .btn-select.active {
             background: var(--accent-color);
             border-color: var(--accent-color);
             color: white;
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 14px rgba(64, 165, 205, 0.38);
         }
 
         .visual-card {
@@ -230,23 +232,12 @@
         #resultModal[hidden] { display: none !important; }
 
         /* Creator Signature */
-        .creator-sig {
-            position: fixed; bottom: 8px; left: 12px; font-size: 10px; color: #4a5568; font-family: sans-serif; pointer-events: none; opacity: 0.6; z-index: 50;
-        }
+        .creator-sig { display: none; }
     </style>
 </head>
-<body class="p-2 lg:p-4 w-full h-screen min-w-[1280px]">
+<body class="w-full h-screen min-w-[1280px]">
 
-    <header class="flex justify-between items-center mb-3 px-2 flex-shrink-0 h-10 border-b border-gray-800">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-            <span class="text-cyan-400">AI</span> Photographer
-        </h1>
-        <p class="text-gray-500 text-xs">
-            Refined Layout | Enhanced 3D Models & Prompts | Created by Lee Seongwon
-        </p>
-    </header>
-
-    <div class="flex gap-4 h-[calc(100vh-70px)] items-stretch">
+    <div id="studioLayout" class="flex gap-[10px] h-screen items-stretch p-[10px]">
 
         <!-- COL 1 (300px) : Subject, Camera, Temp -->
         <div class="w-[300px] flex-none flex flex-col gap-3 scroll-col">
@@ -278,9 +269,9 @@
             </div>
         </div>
 
-        <!-- COL 2: Viewport + Archive -->
-        <div class="flex-grow h-full min-w-0 flex flex-col gap-3">
-            <div class="flex-1 min-h-0">
+        <!-- COL 2: Viewport + Archive (same split concept as ConceptBug) -->
+        <div id="centerSplit" class="flex-grow h-full min-w-0 flex flex-col gap-0 overflow-hidden">
+            <section id="viewportPanel" class="card relative overflow-hidden flex items-center justify-center" style="height:67%;">
                 <div id="viewport-wrapper">
                     <div id="viewport-container">
                         <div id="grid-overlay">
@@ -294,16 +285,19 @@
                         </div>
                     </div>
                 </div>
+            </section>
+            <div id="centerDivider" class="w-full h-[10px] flex items-center justify-center">
+                <div class="h-[2px] w-12 bg-white/10 rounded-full"></div>
             </div>
-            <div class="card p-3 h-[210px] flex flex-col gap-2 overflow-hidden">
+            <section id="archivePanel" class="card p-3 flex flex-col gap-2 overflow-hidden" style="height:33%;">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <button id="archiveModeBtn" class="text-gray-500 hover:text-white text-xs border border-gray-700 rounded px-1.5 py-0.5 transition">H</button>
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-[0.3em]">Archive</label>
+                        <button id="archiveModeBtn" class="text-zinc-500 hover:text-white text-[10px] border border-white/10 rounded px-1.5 py-0.5 transition">H</button>
+                        <label class="text-[10px] font-black text-zinc-600 uppercase tracking-[0.3em]">Archive</label>
                     </div>
                 </div>
                 <div id="archiveGrid" class="flex-1 overflow-y-auto pr-1"></div>
-            </div>
+            </section>
         </div>
 
         <!-- COL 3 (300px) : Ratio, Lens, Effects -->
@@ -345,38 +339,31 @@
             </div>
         </div>
 
-        <!-- COL 4 (300px) : Output -->
+        <!-- COL 4 (300px) : Prompt -->
         <div class="w-[300px] flex-none flex flex-col h-full">
-            <div class="card p-1 bg-gradient-to-br from-cyan-600 to-sky-800 flex flex-col h-full">
-                <div class="bg-[#13151a] rounded-[0.5rem] p-4 flex-grow flex flex-col h-full overflow-hidden">
-                    <h2 class="font-bold text-white mb-4 flex items-center gap-2 text-xl">
-                        <span>Prompt</span>
-                    </h2>
-                    
-                    <div class="mb-4">
-                        <label class="text-xs text-gray-400 uppercase font-bold">Subject Detail</label>
-                        <textarea id="subjectDetail" placeholder="Ex: Cyberpunk girl in neon rain..." 
-                        class="w-full bg-gray-900 border border-gray-700 rounded text-sm p-[5px] text-white focus:border-cyan-500 outline-none mt-2 resize-none h-36"></textarea>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="text-xs text-gray-400 uppercase font-bold">Tags</label>
-                        <div id="compositionTags" class="flex flex-wrap gap-1 mt-1 max-h-16 overflow-y-auto"></div>
-                    </div>
-
-                    <div class="flex-grow flex flex-col min-h-0">
-                        <label class="text-xs text-gray-400 uppercase font-bold mt-2 block">String</label>
-                        <textarea id="finalOutput" readonly 
-                            class="w-full flex-grow bg-black border border-gray-700 rounded text-[11px] leading-tight p-3 text-gray-300 font-mono focus:outline-none resize-none mb-3"></textarea>
-                        
-                        <button id="copyBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded font-bold text-sm transition-all active:scale-95 shadow-lg uppercase tracking-wider shrink-0">
+            <div class="card p-3 flex flex-col h-full overflow-hidden gap-3">
+                <div>
+                    <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Subject Prompt</label>
+                    <textarea id="subjectDetail" placeholder="사진 프롬프트를 직접 입력하세요..." 
+                    class="w-full bg-black/50 border border-white/10 rounded text-sm p-2 text-white focus:border-[#40a5cd] outline-none mt-2 resize-none h-40"></textarea>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Preview</label>
+                    <div id="compositionTags" class="flex flex-wrap gap-1 mt-1 max-h-16 overflow-y-auto"></div>
+                </div>
+                <div class="flex-grow flex flex-col min-h-0">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">String</label>
+                        <button id="copyBtn" class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
                             Copy Prompt
                         </button>
-                        <button id="generateBtn" class="w-full mt-2 bg-[#40a5cd] hover:bg-[#358eb0] text-white py-3 rounded font-bold text-sm transition-all active:scale-95 shadow-lg uppercase tracking-wider shrink-0">
-                            Generate
-                        </button>
-                        <div id="genError" class="hidden mt-2 p-2 bg-red-500/15 border border-red-500/30 text-red-300 text-[10px] rounded text-center font-bold"></div>
                     </div>
+                    <textarea id="finalOutput" readonly 
+                        class="w-full flex-grow bg-black/70 border border-white/10 rounded text-[11px] leading-tight p-3 text-gray-300 font-mono focus:outline-none resize-none mb-3"></textarea>
+                    <button id="generateBtn" class="w-full mt-auto bg-[#40a5cd] hover:bg-[#358eb0] text-white py-3 rounded font-black text-sm transition-all active:scale-95 shadow-lg uppercase tracking-[0.2em] shrink-0">
+                        Generate
+                    </button>
+                    <div id="genError" class="hidden mt-2 p-2 bg-red-500/15 border border-red-500/30 text-red-300 text-[10px] rounded text-center font-bold"></div>
                 </div>
             </div>
         </div>
@@ -496,7 +483,8 @@
         };
 
         let scene, camera, renderer, controls;
-        let archiveVertical = false;
+        let archiveSideMode = false;
+        let splitPercent = 67;
         let archiveItems = [];
         let subjects = {}, mainLight, ambientLight;
         const $ = id => document.getElementById(id);
@@ -586,6 +574,7 @@
                 if (e.target === e.currentTarget) closeResultModal();
             });
             window.addEventListener('resize', resizeViewport);
+            applyCenterSplitMode();
             renderArchive();
             updatePrompt();
         }
@@ -626,7 +615,7 @@
                 return;
             }
 
-            const cols = archiveVertical ? 'grid-cols-1' : 'grid-cols-6';
+            const cols = archiveSideMode ? 'grid-cols-2' : 'grid-cols-6';
             grid.className = `flex-1 overflow-y-auto pr-1 grid gap-2 ${cols}`;
             grid.innerHTML = '';
             archiveItems.forEach((item, index) => {
@@ -649,9 +638,39 @@
             });
         }
 
+        function applyCenterSplitMode() {
+            const centerSplit = $('centerSplit');
+            const viewportPanel = $('viewportPanel');
+            const archivePanel = $('archivePanel');
+            const divider = $('centerDivider');
+            if (!centerSplit || !viewportPanel || !archivePanel || !divider) return;
+
+            if (archiveSideMode) {
+                centerSplit.classList.remove('flex-col');
+                centerSplit.classList.add('flex-row');
+                divider.className = 'w-[10px] h-full flex items-center justify-center';
+                divider.innerHTML = '<div class="w-[2px] h-12 bg-white/10 rounded-full"></div>';
+                viewportPanel.style.width = `${splitPercent}%`;
+                viewportPanel.style.height = '100%';
+                archivePanel.style.width = `${100 - splitPercent}%`;
+                archivePanel.style.height = '100%';
+            } else {
+                centerSplit.classList.remove('flex-row');
+                centerSplit.classList.add('flex-col');
+                divider.className = 'w-full h-[10px] flex items-center justify-center';
+                divider.innerHTML = '<div class="h-[2px] w-12 bg-white/10 rounded-full"></div>';
+                viewportPanel.style.width = '100%';
+                viewportPanel.style.height = `${splitPercent}%`;
+                archivePanel.style.width = '100%';
+                archivePanel.style.height = `${100 - splitPercent}%`;
+            }
+            resizeViewport();
+        }
+
         function toggleArchiveMode() {
-            archiveVertical = !archiveVertical;
-            $('archiveModeBtn').textContent = archiveVertical ? 'V' : 'H';
+            archiveSideMode = !archiveSideMode;
+            $('archiveModeBtn').textContent = archiveSideMode ? 'V' : 'H';
+            applyCenterSplitMode();
             renderArchive();
         }
 
