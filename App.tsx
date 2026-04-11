@@ -203,6 +203,7 @@ const App: React.FC = () => {
   
   const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-image-preview');
   const photographerFrameRef = useRef<HTMLIFrameElement>(null);
+  const [photographerSubjectDetail, setPhotographerSubjectDetail] = useState('');
   const [photographerPrompt, setPhotographerPrompt] = useState('');
   const [isPhotoGenerating, setIsPhotoGenerating] = useState(false);
   const [photoResults, setPhotoResults] = useState<GenerationResult[]>([]);
@@ -702,8 +703,11 @@ const App: React.FC = () => {
     const timer = window.setInterval(() => {
       try {
         const frameDoc = photographerFrameRef.current?.contentDocument;
+        const subjectNode = frameDoc?.getElementById('subjectDetail') as HTMLTextAreaElement | null;
         const promptNode = frameDoc?.getElementById('finalOutput') as HTMLTextAreaElement | null;
+        const nextSubject = subjectNode?.value || '';
         const nextPrompt = promptNode?.value || '';
+        setPhotographerSubjectDetail((prev) => (prev === nextSubject ? prev : nextSubject));
         setPhotographerPrompt((prev) => (prev === nextPrompt ? prev : nextPrompt));
       } catch {
       }
@@ -719,8 +723,11 @@ const App: React.FC = () => {
         const style = frameDoc.createElement('style');
         style.id = 'conceptbug-embed-style';
         style.textContent = `
+          header { display: none !important; }
           .creator-sig { display: none !important; }
           body { min-width: 0 !important; padding: 8px !important; }
+          body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch { height: calc(100vh - 16px) !important; gap: 8px !important; }
+          body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch > div.flex-grow.h-full.min-w-0 { flex: 1 1 auto !important; min-width: 0 !important; }
           body > div.flex.gap-4.h-\\[calc\\(100vh-70px\\)\\].items-stretch > div:last-child { display: none !important; }
         `;
         frameDoc.head.appendChild(style);
@@ -728,6 +735,29 @@ const App: React.FC = () => {
     } catch {
     }
   };
+
+  const syncPhotographerSubjectToFrame = (text: string) => {
+    try {
+      const frameDoc = photographerFrameRef.current?.contentDocument;
+      const subjectNode = frameDoc?.getElementById('subjectDetail') as HTMLTextAreaElement | null;
+      if (!subjectNode) return;
+      if (subjectNode.value !== text) {
+        subjectNode.value = text;
+        subjectNode.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    } catch {
+    }
+  };
+
+  const handlePhotographerSubjectChange = (text: string) => {
+    setPhotographerSubjectDetail(text);
+    syncPhotographerSubjectToFrame(text);
+  };
+
+  useEffect(() => {
+    if (photoSelectedIndex < photoResults.length) return;
+    setPhotoSelectedIndex(0);
+  }, [photoResults, photoSelectedIndex]);
 
   const handlePhotoCopyPrompt = () => {
     if (!photographerPrompt.trim()) return;
@@ -1104,20 +1134,79 @@ const App: React.FC = () => {
         </div>
       </main>
       ) : activeAppTab === 'photographer' ? (
-      <main className="flex-1 flex gap-[10px] h-full overflow-hidden">
-        <section className="flex-1 h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
-          <iframe
-            ref={photographerFrameRef}
-            onLoad={handlePhotographerFrameLoad}
-            title="AI Photographer"
-            src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
-            className="w-full h-full border border-white/5 rounded-[5px] bg-black"
-          />
-        </section>
+      <main className="flex-1 flex gap-[10px] h-full overflow-hidden relative">
+        <div className="flex-1 min-w-0 h-full flex flex-col gap-[10px] overflow-hidden">
+          <section className="flex-[7] min-h-0 bg-zinc-900/30 border border-white/5 rounded-[5px] p-2 overflow-hidden">
+            <iframe
+              ref={photographerFrameRef}
+              onLoad={handlePhotographerFrameLoad}
+              title="AI Photographer"
+              src={`${import.meta.env.BASE_URL}apps/ai-photographer.html`}
+              className="w-full h-full border border-white/5 rounded-[5px] bg-black"
+            />
+          </section>
+
+          <section className="flex-[3] min-h-0 bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden">
+            <div className="flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsPhotoArchiveSide(!isPhotoArchiveSide)}
+                  className={`p-1 rounded-md transition-all hover:bg-white/5 text-zinc-600 hover:text-white ${isPhotoArchiveSide ? 'text-indigo-400' : ''}`}
+                  title="Toggle Archive View"
+                >
+                  <Smartphone size={12} className={isPhotoArchiveSide ? 'rotate-90' : ''} />
+                </button>
+                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">Archive</h2>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              {photoResults.length === 0 ? (
+                <div className="h-full flex items-center justify-center opacity-5">
+                  <span className="font-black uppercase text-3xl tracking-tighter">EMPTY</span>
+                </div>
+              ) : (
+                <div className={`grid gap-2 ${isPhotoArchiveSide ? 'grid-cols-1' : 'grid-cols-6'} px-1 pt-1`}>
+                  {photoResults.map((res, idx) => (
+                    <div key={res.timestamp} className="relative group overflow-hidden">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPhotoResults((prev) => prev.filter((_, pIdx) => pIdx !== idx));
+                        }}
+                        className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-500/90 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm shadow-lg active:scale-90"
+                        title="Delete"
+                      >
+                        <X size={10} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPhotoSelectedIndex(idx);
+                          setIsPhotoModalOpen(true);
+                        }}
+                        className={`w-full border ${photoSelectedIndex === idx ? 'border-white/80 ring-2 ring-white/20' : 'border-white/5 hover:border-white/20'} transition-all`}
+                      >
+                        <img src={res.url} className="w-full aspect-square object-cover block" alt="" />
+                        <div className="text-[9px] text-zinc-400 py-1 bg-black/40">{res.duration}s</div>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+
         <div className="w-[320px] shrink-0 h-full flex flex-col gap-[10px] overflow-hidden">
-          <section className="flex-1 bg-zinc-900/40 border border-white/5 rounded-[5px] p-3 flex flex-col gap-2 overflow-hidden">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">STRING</h2>
-            <div className="flex items-center justify-end">
+          <section className="h-full bg-zinc-900/40 border border-white/5 rounded-[5px] p-3 flex flex-col gap-2 overflow-hidden">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">SUBJECT PROMPT</h2>
+            <textarea
+              value={photographerSubjectDetail}
+              onChange={(e) => handlePhotographerSubjectChange(e.target.value)}
+              placeholder="사진 프롬프트를 직접 입력하세요..."
+              className="w-full h-[190px] bg-black/40 border border-white/5 rounded-lg p-3 text-[12px] outline-none transition custom-scrollbar resize-none leading-relaxed"
+            />
+            <div className="flex items-center justify-between mt-1">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">STRING</h2>
               <button
                 onClick={handlePhotoCopyPrompt}
                 className="px-2.5 py-1.5 bg-white/5 border border-white/5 rounded-lg text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white hover:border-white/20 transition-all"
@@ -1143,57 +1232,6 @@ const App: React.FC = () => {
                 {photoError}
               </div>
             )}
-          </section>
-
-          <section className="flex-1 bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden">
-            <div className="flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsPhotoArchiveSide(!isPhotoArchiveSide)}
-                  className={`p-1 rounded-md transition-all hover:bg-white/5 text-zinc-600 hover:text-white ${isPhotoArchiveSide ? 'text-indigo-400' : ''}`}
-                  title="Toggle Archive View"
-                >
-                  <Smartphone size={12} className={isPhotoArchiveSide ? 'rotate-90' : ''} />
-                </button>
-                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">Archive</h2>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-              {photoResults.length === 0 ? (
-                <div className="h-full flex items-center justify-center opacity-5">
-                  <span className="font-black uppercase text-3xl tracking-tighter">EMPTY</span>
-                </div>
-              ) : (
-                <div className={`grid gap-2 ${isPhotoArchiveSide ? 'grid-cols-1' : 'grid-cols-3'} px-1 pt-1`}>
-                  {photoResults.map((res, idx) => (
-                    <div key={res.timestamp} className="relative group overflow-hidden">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPhotoResults((prev) => prev.filter((_, pIdx) => pIdx !== idx));
-                          if (photoSelectedIndex >= idx) setPhotoSelectedIndex(0);
-                        }}
-                        className="absolute top-1 right-1 p-1 bg-black/60 hover:bg-red-500/90 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm shadow-lg active:scale-90"
-                        title="Delete"
-                      >
-                        <X size={10} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPhotoSelectedIndex(idx);
-                          setIsPhotoModalOpen(true);
-                        }}
-                        className={`w-full border ${photoSelectedIndex === idx ? 'border-white/80 ring-2 ring-white/20' : 'border-white/5 hover:border-white/20'} transition-all`}
-                      >
-                        <img src={res.url} className="w-full aspect-square object-cover block" alt="" />
-                        <div className="text-[9px] text-zinc-400 py-1 bg-black/40">{res.duration}s</div>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </section>
         </div>
 
