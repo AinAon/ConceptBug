@@ -14,10 +14,10 @@
     <style>
         :root {
             --bg-color: #050505;
-            --panel-color: rgba(24, 24, 27, 0.45);
+            --panel-color: rgba(24, 24, 27, 0.4);
             --accent-color: #40a5cd;
             --text-color: #e4e4e7;
-            --line-color: rgba(255, 255, 255, 0.08);
+            --line-color: rgba(255, 255, 255, 0.05);
         }
 
         body {
@@ -31,9 +31,10 @@
             user-select: none;
         }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+		::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
         .card {
             background: var(--panel-color);
@@ -47,7 +48,7 @@
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.3em;
-            color: rgb(113 113 122);
+            color: #71717a;
             line-height: 1;
         }
         .panel-subtitle {
@@ -268,7 +269,7 @@
 </head>
 <body class="w-full h-screen">
 
-    <div id="studioLayout" class="flex gap-[10px] h-screen items-stretch p-[10px]">
+    <div id="studioLayout" class="flex gap-[10px] h-screen items-stretch">
 
         <!-- COL 1 (300px) : Subject, Camera, Temp -->
         <div class="w-[300px] flex-none h-full">
@@ -363,7 +364,7 @@
                         Output Settings
                     </span>
                 </label>
-                <div class="grid grid-cols-3 gap-2" id="ar-grid"></div>
+                <div class="grid grid-cols-3 gap-1.5" id="ar-grid"></div>
             </div>
 
             <!-- 3. Lens (Moved to Right in v25) -->

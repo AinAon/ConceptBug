@@ -731,7 +731,7 @@ const App: React.FC = () => {
           header { display: none !important; }
           .creator-sig { display: none !important; }
           body { min-width: 0 !important; padding: 0 !important; margin: 0 !important; }
-          #studioLayout { height: 100vh !important; }
+          #studioLayout { height: 100vh !important; padding: 0 !important; }
         `;
         frameDoc.head.appendChild(style);
       }
