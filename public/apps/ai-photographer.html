@@ -366,41 +366,34 @@
             </div>
         </div>
 
-        <!-- COL 4 (300px) : Prompt -->
+        <!-- COL 4 : Prompt -->
         <div class="w-[15%] flex-none flex flex-col gap-[10px] h-full overflow-hidden">
-            <div class="card p-3 flex flex-col h-full overflow-hidden gap-3">
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
-                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Subject Prompt</h2>
-                    </div>
-                    <textarea id="subjectDetail" placeholder="사진 프롬프트를 직접 입력하세요..." 
-                    class="w-full bg-black/50 border border-white/10 rounded text-xs p-2 text-white focus:border-[#40a5cd] outline-none mt-2 resize-none h-64"></textarea>
+            <section class="card p-3 shrink-0">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Subject Prompt</h2>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.5"/></svg>
-                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Tags</h2>
-                    </div>
-                    <div id="compositionTags" class="flex flex-wrap content-start gap-1 mt-1 min-h-[52px] max-h-[88px] overflow-y-auto"></div>
-                </div>
-                <div class="flex-1 flex flex-col min-h-0">
-                    <div class="flex items-center gap-2 mb-2 shrink-0">
-                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">Prompt Preview</h2>
-                    </div>
-                    <textarea id="finalOutput" readonly 
-                        class="w-full flex-1 bg-white/[0.03] border border-white/5 rounded text-[10px] leading-[1.6] p-3 text-white/20 focus:outline-none resize-none mb-2"></textarea>
-                    <button id="copyBtn" class="w-full mb-2 px-2 py-2 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
+                <textarea id="subjectDetail" placeholder="사진 프롬프트를 직접 입력하세요..." 
+                class="w-full bg-black/50 border border-white/10 rounded text-xs p-2 text-white focus:border-[#40a5cd] outline-none resize-none h-64"></textarea>
+            </section>
+
+            <section class="card p-3 flex-1 min-h-0 flex flex-col">
+                <div class="flex items-center justify-between mb-2 shrink-0">
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">Prompt Preview</h2>
+                    <button id="copyBtn" class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
                         Copy Prompt
                     </button>
                 </div>
-                <div class="shrink-0 flex flex-col gap-3">
-                    <button id="generateBtn" class="w-full h-10 rounded-xl bg-[#40a5cd] hover:bg-[#358eb0] text-white font-black text-[12px] transition-all active:scale-[0.98] shadow-2xl uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                        <svg class="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
-                        <span>Generate</span>
-                    </button>
-                    <div id="genError" class="hidden p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] rounded-xl text-center font-black uppercase tracking-widest"></div>
-                </div>
+                <textarea id="finalOutput" readonly 
+                    class="w-full flex-1 bg-white/[0.03] border border-white/5 rounded text-[10px] leading-[1.6] p-3 text-white/20 focus:outline-none resize-none"></textarea>
+            </section>
+
+            <div class="shrink-0 flex flex-col gap-3">
+                <button id="generateBtn" class="w-full h-10 rounded-xl bg-[#40a5cd] hover:bg-[#358eb0] text-white font-black text-[12px] transition-all active:scale-[0.98] shadow-2xl uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                    <svg class="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+                    <span>Generate</span>
+                </button>
+                <div id="genError" class="hidden p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] rounded-xl text-center font-black uppercase tracking-widest"></div>
             </div>
         </div>
 
@@ -885,11 +878,18 @@
                 btn.className = `aspect-square rounded-lg border flex flex-col items-center justify-center text-[10px] font-black transition-all ${isActive ? 'bg-[#40a5cd] border-[#40a5cd] text-white shadow-2xl scale-[1.02]' : 'bg-white/5 border-white/5 text-zinc-600 hover:border-white/20'}`;
                 btn.onclick = () => { state.ar = ar; createARButtons(); resizeViewport(); updatePrompt(); };
                 const icon = document.createElement('div');
-                icon.className = 'border-2 border-current rounded-[2px] mb-1.5 shadow-sm';
-                const baseS = 16;
-                const maxD = Math.max(ar.w, ar.h);
-                icon.style.width = `${(ar.w / maxD) * baseS}px`;
-                icon.style.height = `${(ar.h / maxD) * baseS}px`;
+                const iconClassMap = {
+                    '21:9': 'w-6 h-[10px]',
+                    '16:9': 'w-6 h-[14px]',
+                    '3:2': 'w-6 h-[16px]',
+                    '4:3': 'w-6 h-[18px]',
+                    '1:1': 'w-[18px] h-[18px]',
+                    '3:4': 'w-[18px] h-6',
+                    '2:3': 'w-[16px] h-6',
+                    '9:16': 'w-[14px] h-6',
+                    '9:21': 'w-[10px] h-6',
+                };
+                icon.className = `border-2 border-current rounded-[2px] mb-1.5 shadow-sm ${iconClassMap[ar.label] || 'w-[10px] h-6'}`;
                 const span = document.createElement('span');
                 span.className = 'font-black';
                 span.textContent = ar.label;
@@ -1358,15 +1358,6 @@
         }
 
         function updatePrompt() {
-            const tags = $('compositionTags');
-            // Short tag display
-            const shortAngle = $('debug-angle').innerText;
-            tags.innerHTML = `
-                <span class="px-2 py-1 bg-gray-800 text-cyan-300 text-[9px] rounded border border-gray-700 whitespace-nowrap">${state.shotSize}</span>
-                <span class="px-2 py-1 bg-gray-800 text-cyan-300 text-[9px] rounded border border-gray-700 whitespace-nowrap">${shortAngle}</span>
-                <span class="px-2 py-1 bg-gray-800 text-cyan-300 text-[9px] rounded border border-gray-700 whitespace-nowrap">${state.composition}</span>
-            `;
-
             const p = [];
             let subj = $('subjectDetail').value.trim();
             if(!subj) subj = state.subjectMode === 'human' ? "Portrait of a person" : (state.subjectMode === 'product' ? "Product shot" : "Landscape view");
