@@ -37,6 +37,10 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
         .card {
             background: var(--panel-color);
@@ -377,15 +381,19 @@
                 class="w-full bg-black/50 border border-white/10 rounded text-xs p-2 text-white focus:border-[#40a5cd] outline-none resize-none h-64"></textarea>
             </section>
 
-            <section class="card p-3 flex-1 min-h-0 flex flex-col">
-                <div class="flex items-center justify-between mb-2 shrink-0">
-                    <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">Prompt Preview</h2>
-                    <button id="copyBtn" class="px-2 py-1 bg-white/5 border border-white/10 rounded text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white hover:bg-white/10 transition">
-                        Copy Prompt
+            <section class="flex-1 bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden">
+                <div class="flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">PROMPT PREVIEW</h2>
+                    </div>
+                    <button id="copyBtn" class="p-1.5 rounded-lg transition-all hover:bg-white/5 text-zinc-600" title="Copy to clipboard">
+                        <svg id="copyIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                     </button>
                 </div>
-                <textarea id="finalOutput" readonly 
-                    class="w-full flex-1 bg-white/[0.03] border border-white/5 rounded text-[10px] leading-[1.6] p-3 text-white/20 focus:outline-none resize-none"></textarea>
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <p id="finalOutputDisplay" class="text-[10px] leading-[1.6] text-white/20 selection:bg-white/10 whitespace-pre-wrap">No content synergy yet. Start building your scenario.</p>
+                </div>
+                <textarea id="finalOutput" readonly class="hidden"></textarea>
             </section>
 
             <div class="shrink-0 flex flex-col gap-3">
@@ -599,7 +607,23 @@
             });
 
             $('subjectDetail').addEventListener('input', updatePrompt);
-            $('copyBtn').addEventListener('click', () => { $('finalOutput').select(); document.execCommand('copy'); });
+            $('copyBtn').addEventListener('click', async () => {
+                const value = ($('finalOutput').value || '').trim();
+                if (!value) return;
+                try {
+                    await navigator.clipboard.writeText(value);
+                    const icon = $('copyIcon');
+                    if (icon) {
+                        icon.innerHTML = '<path d="M20 6 9 17l-5-5"></path>';
+                        window.setTimeout(() => {
+                            icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>';
+                        }, 1200);
+                    }
+                } catch {
+                    $('finalOutput').select();
+                    document.execCommand('copy');
+                }
+            });
             $('archiveModeBtn').addEventListener('click', toggleArchiveMode);
             $('generateBtn').addEventListener('click', handleGenerate);
             $('closeModalBtn').addEventListener('click', closeResultModal);
@@ -1429,7 +1453,10 @@
 
             p.push("ACES color space, high fidelity, 8k");
 
-            $('finalOutput').value = p.join(", ") + " " + state.ar.val;
+            const finalText = p.join(", ") + " " + state.ar.val;
+            $('finalOutput').value = finalText;
+            const displayNode = $('finalOutputDisplay');
+            if (displayNode) displayNode.textContent = finalText || "No content synergy yet. Start building your scenario.";
         }
 
         window.addEventListener('load', initApp);
