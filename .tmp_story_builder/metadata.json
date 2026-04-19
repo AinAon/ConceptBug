@@ -1,5 +1,0 @@
-{
-  "name": "Story Builder",
-  "description": "A professional storyboard creation tool that generates sketch-style images using Gemini AI with drag-and-drop reordering and a 4x4 grid gallery view.",
-  "requestFramePermissions": []
-}

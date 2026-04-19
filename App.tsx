@@ -36,9 +36,6 @@ import {
 import { TabType, PromptParts, AspectRatio, Resolution, GenerationResult } from './types';
 import { ASPECT_RATIOS, RESOLUTIONS } from './constants';
 import { generateImage, translateText, extractPromptFromImages, extractExifPrompt, upscaleImage, validateApiCredential } from './services/geminiService';
-import StoryBuilderEditor from './components/storybuilder/StoryBuilderEditor';
-import StoryViewer from './components/storybuilder/StoryViewer';
-import { StoryItem, StoryModel, StoryRatio } from './components/storybuilder/types';
 
 /**
  * Enhanced Image Slot Component
@@ -127,8 +124,8 @@ const App: React.FC = () => {
   const APP_TABS = [
     { id: 'conceptbug', name: '컨셉충', description: '현재 작업 중인 이미지 생성 툴', icon: Sparkles },
     { id: 'photographer', name: 'AI포토그래퍼', description: '실사사진 촬영 앱 (준비 중)', icon: Camera },
-    { id: 'storybuilder', name: '스토리빌더', description: '스토리보드 / 콘티 생성 툴 (준비 중)', icon: Building2 },
-    { id: 'storyviewer', name: 'Story Viewer', description: 'Storyboard viewer', icon: Eye },
+    { id: 'storybuilder', name: 'Story Builder', description: '스토리보드 / 콘티 생성', icon: Building2 },
+    { id: 'storyviewer', name: 'Story Viewer', description: '스토리보드 뷰어', icon: Eye },
     { id: 'charactersheet', name: '캐릭터시트', description: '페이셜 턴어라운드 시트 (준비 중)', icon: UserCircle },
     { id: 'fittingroom', name: '피팅룸', description: '의상 교체 / 스타일링 툴 (준비 중)', icon: Paintbrush },
   ] as const;
@@ -218,11 +215,8 @@ const App: React.FC = () => {
   const [photoSelectedIndex, setPhotoSelectedIndex] = useState(0);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const [storyItems, setStoryItems] = useState<StoryItem[]>([
-    { id: crypto.randomUUID(), cutNumber: 1, context: '', referenceImages: [], isGenerating: false },
-  ]);
-  const [storyModel] = useState<StoryModel>('gemini-3.1-flash-image-preview');
-  const [storyRatio] = useState<StoryRatio>('16:9');
+  const storyBuilderFrameRef = useRef<HTMLIFrameElement>(null);
+  const storyViewerFrameRef = useRef<HTMLIFrameElement>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpscaling, setIsUpscaling] = useState(false);
@@ -873,48 +867,35 @@ const App: React.FC = () => {
     }
   };
 
-  const addStoryItem = () => {
-    setStoryItems((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), cutNumber: prev.length + 1, context: '', referenceImages: [], isGenerating: false },
-    ]);
+  const syncCredentialToFrame = (frameRef: React.RefObject<HTMLIFrameElement>) => {
+    const frameWindow = frameRef.current?.contentWindow;
+    if (!frameWindow) return;
+    frameWindow.postMessage({ type: 'conceptbug_api_credential', credential: appPassword || '' }, '*');
   };
 
-  const removeStoryItem = (id: string) => {
-    setStoryItems((prev) => prev.filter((item) => item.id !== id).map((item, idx) => ({ ...item, cutNumber: idx + 1 })));
-  };
-
-  const updateStoryItem = (id: string, updates: Partial<StoryItem>) => {
-    setStoryItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
-  };
-
-  const handleStoryGenerate = async (id: string) => {
-    if (!appPassword) {
-      setError("API Key is required.");
-      return;
-    }
-    const target = storyItems.find((item) => item.id === id);
-    if (!target || !target.context.trim()) return;
-
-    updateStoryItem(id, { isGenerating: true });
+  const handleStoryFrameLoad = (frameRef: React.RefObject<HTMLIFrameElement>) => {
     try {
-      const prompt =
-        `A rough, hand-drawn pencil sketch storyboard illustration showing: ${target.context}. ` +
-        `Expressive pencil lines, black and white, white background, no text overlays.`;
-      const generatedUrl = await generateImage(
-        appPassword,
-        prompt,
-        storyModel,
-        storyRatio,
-        '1K',
-        target.referenceImages
-      );
-      updateStoryItem(id, { imageUrl: generatedUrl, isGenerating: false });
-    } catch (e) {
-      updateStoryItem(id, { isGenerating: false });
-      setError(formatError(e, "Story generation failed."));
-    }
+      const frameDoc = frameRef.current?.contentDocument;
+      if (!frameDoc) return;
+
+      if (!frameDoc.getElementById('conceptbug-embed-style')) {
+        const style = frameDoc.createElement('style');
+        style.id = 'conceptbug-embed-style';
+        style.textContent = `
+          html, body { background:#050505 !important; color:#e5e5e5 !important; font-family: Inter, sans-serif !important; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+          * { border-radius: inherit; }
+        `;
+        frameDoc.head.appendChild(style);
+      }
+    } catch {}
+
+    syncCredentialToFrame(frameRef);
   };
+
+  useEffect(() => {
+    syncCredentialToFrame(storyBuilderFrameRef);
+    syncCredentialToFrame(storyViewerFrameRef);
+  }, [appPassword]);
 
   const selectedPhotoResult = photoResults[photoSelectedIndex];
 
@@ -1254,18 +1235,25 @@ const App: React.FC = () => {
         />
       </main>
       ) : activeAppTab === 'storybuilder' ? (
-      <StoryBuilderEditor
-        items={storyItems}
-        model={storyModel}
-        ratio={storyRatio}
-        isCredentialReady={isPasswordConfirmed}
-        onAddItem={addStoryItem}
-        onRemoveItem={removeStoryItem}
-        onUpdateItem={updateStoryItem}
-        onGenerate={handleStoryGenerate}
-      />
+      <main className="flex-1 h-full overflow-hidden">
+        <iframe
+          ref={storyBuilderFrameRef}
+          onLoad={() => handleStoryFrameLoad(storyBuilderFrameRef)}
+          title="Story Builder"
+          src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=editor`}
+          className="w-full h-full border-0 bg-transparent"
+        />
+      </main>
       ) : activeAppTab === 'storyviewer' ? (
-      <StoryViewer items={storyItems} ratio={storyRatio} />
+      <main className="flex-1 h-full overflow-hidden">
+        <iframe
+          ref={storyViewerFrameRef}
+          onLoad={() => handleStoryFrameLoad(storyViewerFrameRef)}
+          title="Story Viewer"
+          src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=gallery`}
+          className="w-full h-full border-0 bg-transparent"
+        />
+      </main>
       ) : (
       <main className="flex-1 h-full overflow-hidden">
         <section className="h-full bg-zinc-900/30 border border-white/5 rounded-[5px] p-6 flex items-center justify-center">
