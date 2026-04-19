@@ -1290,7 +1290,7 @@
             const temp = k / 100; let r, g, b;
             if(temp <= 66) { r = 255; g = 99.47 * Math.log(temp) - 161.1; b = temp <= 19 ? 0 : 138.5 * Math.log(temp - 10) - 305; } 
             else { r = 329.7 * Math.pow(temp - 60, -0.133); g = 288.1 * Math.pow(temp - 60, -0.075); b = 255; }
-            const color = `rgb(${Math.max(0,Math.min(255,r))}, ${Math.max(0,Math.min(255,g))}, ${Math.max(0,Math.min(255,b))})`;
+            const color = `rgb(${Math.round(Math.max(0,Math.min(255,r)))}, ${Math.round(Math.max(0,Math.min(255,g)))}, ${Math.round(Math.max(0,Math.min(255,b)))})`;
             mainLight.color.set(color); ambientLight.color.set(color);
             let label = "Neutral";
             if(k < 2000) label = "Candlelight"; else if(k < 3000) label = "Tungsten"; else if(k < 4500) label = "Warm White"; else if(k < 6000) label = "Daylight"; else if(k < 7500) label = "Cloudy"; else if(k < 9000) label = "Blue Hour"; else label = "Deep Blue";
