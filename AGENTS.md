@@ -90,3 +90,51 @@ After advisor guidance, return implementation to the primary executor.
 - Optimize total cost efficiency across the full task, not single-step quality.
 - Use the stronger model as a strategic reviewer/advisor, not a default worker.
 - Keep execution momentum with the cheaper model once direction is clear.
+
+## Root Cause Communication Protocol (Mandatory)
+- When a user reports a problem, do **not** present a guessed root cause as final.
+- First produce hypotheses, then run a quick validation step before reporting causes.
+- For simple checks, use **gpt-5.4-mini** for fast verification.
+- For complex/high-impact issues, verify directly with code/log/runtime evidence before concluding.
+- After verification, report only high-probability causes with brief evidence and confidence.
+- If evidence is weak, explicitly label it as tentative and request one targeted follow-up check.
+
+## Cache Change Safety Rule
+- Do not introduce force cache-busting/no-store logic as a default fix unless there is evidence that stale cache is the root cause.
+- In image-loading paths, treat cache behavior as a stability-sensitive area; prefer preserving existing cache contract first.
+- If cache behavior must be changed, document expected side effects and add a rollback path.
+
+## Mandatory Line For Small Models
+Always append the following sentence block when delegating to a smaller model:
+- Only modify the specified section.
+- Do NOT rewrite the entire file.
+- Preserve encoding (UTF-8) and formatting.
+- Do NOT refactor unrelated code.
+
+## Strict Edit Safety Rules (Mandatory)
+- NEVER rewrite the entire file.
+- Modify ONLY the specified lines.
+- Preserve all existing text exactly (including Unicode/Korean).
+- Do NOT normalize encoding or formatting.
+- Do NOT refactor.
+- Do NOT reformat.
+- Do NOT clean up code.
+
+File encoding must remain UTF-8.
+
+## Communication Before Edits (Mandatory)
+- Do NOT make code changes silently.
+- Always announce intended edits before modifying files.
+
+## File Rewrite Prohibition (Mandatory)
+- Never use whole-file rewrite methods for existing files (`Set-Content`, full-file regex replace, here-string overwrite, or equivalent).
+- Never perform operations that rewrite large unchanged regions just to edit a few lines.
+- For existing files, use line-targeted patching only (`apply_patch` with minimal hunks).
+- If a patch cannot be applied safely, stop and ask before attempting any fallback that rewrites the file.
+- After each edit, immediately verify diff scope is minimal; if diff is wide, revert and re-apply with a smaller patch.
+
+## Partial-Request Execution Rule (Mandatory)
+- When the user requests a partial/small change, execute only the requested scope immediately.
+- Do NOT start broad repository-wide inspection, cleanup, refactor, reformat, or normalization during partial requests.
+- If a full-file audit/cleanup is needed, schedule and run it separately as an explicit dedicated task.
+- For partial requests, prioritize fast, minimal-line patches over general codebase improvements.
