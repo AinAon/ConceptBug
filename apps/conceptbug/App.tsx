@@ -20,7 +20,7 @@ import {
   Maximize2,
   Minimize2,
   PlusCircle,
-  Eye,
+  ScrollText,
   Terminal,
   X,
   Star,
@@ -124,8 +124,7 @@ const App: React.FC = () => {
   const APP_TABS = [
     { id: 'conceptbug', name: '컨셉충', description: '현재 작업 중인 이미지 생성 툴', icon: Sparkles },
     { id: 'photographer', name: 'AI포토그래퍼', description: '실사사진 촬영 앱 (준비 중)', icon: Camera },
-    { id: 'storybuilder', name: 'Story Builder', description: '스토리보드 / 콘티 생성', icon: Building2 },
-    { id: 'storyviewer', name: 'Story Viewer', description: '스토리보드 뷰어', icon: Eye },
+    { id: 'storybuilder', name: 'Story Board', description: '스토리 빌더 + 뷰어', icon: ScrollText },
     { id: 'charactersheet', name: '캐릭터시트', description: '페이셜 턴어라운드 시트 (준비 중)', icon: UserCircle },
     { id: 'fittingroom', name: '피팅룸', description: '의상 교체 / 스타일링 툴 (준비 중)', icon: Paintbrush },
   ] as const;
@@ -219,6 +218,7 @@ const App: React.FC = () => {
   const storyViewerFrameRef = useRef<HTMLIFrameElement>(null);
   const [isStoryBuilderLoaded, setIsStoryBuilderLoaded] = useState(false);
   const [isStoryViewerLoaded, setIsStoryViewerLoaded] = useState(false);
+  const [isStoryViewerExpanded, setIsStoryViewerExpanded] = useState(false);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpscaling, setIsUpscaling] = useState(false);
@@ -1296,27 +1296,40 @@ const App: React.FC = () => {
           className="w-full h-full border-0 bg-transparent"
         />
       </main>
-      ) : activeAppTab === 'storybuilder' || activeAppTab === 'storyviewer' ? (
-      <main className="flex-1 h-full overflow-hidden relative bg-[#050505]">
-        <div className={`absolute inset-0 transition-opacity duration-150 ${activeAppTab === 'storybuilder' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          {!isStoryBuilderLoaded && <div className="absolute inset-0 bg-[#050505]" />}
-          <iframe
-            ref={storyBuilderFrameRef}
-            onLoad={() => handleStoryFrameLoad(storyBuilderFrameRef, () => setIsStoryBuilderLoaded(true))}
-            title="Story Builder"
-            src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=editor`}
-            className="w-full h-full border-0 bg-[#050505]"
-          />
-        </div>
-        <div className={`absolute inset-0 transition-opacity duration-150 ${activeAppTab === 'storyviewer' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          {!isStoryViewerLoaded && <div className="absolute inset-0 bg-[#050505]" />}
-          <iframe
-            ref={storyViewerFrameRef}
-            onLoad={() => handleStoryFrameLoad(storyViewerFrameRef, () => setIsStoryViewerLoaded(true))}
-            title="Story Viewer"
-            src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=gallery`}
-            className="w-full h-full border-0 bg-[#050505]"
-          />
+      ) : activeAppTab === 'storybuilder' ? (
+      <main className="flex-1 h-full overflow-hidden relative">
+        <div className={`h-full grid gap-[10px] ${isStoryViewerExpanded ? 'grid-cols-1' : 'grid-cols-[1fr_1fr]'}`}>
+          {!isStoryViewerExpanded && (
+          <section className="h-full bg-zinc-900/40 border border-white/5 rounded-[5px] overflow-hidden relative">
+            {!isStoryBuilderLoaded && <div className="absolute inset-0 bg-[#050505]" />}
+            <iframe
+              ref={storyBuilderFrameRef}
+              onLoad={() => handleStoryFrameLoad(storyBuilderFrameRef, () => setIsStoryBuilderLoaded(true))}
+              title="Story Builder"
+              src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=editor`}
+              className="w-full h-full border-0 bg-[#050505]"
+            />
+          </section>
+          )}
+          <section className={`h-full bg-zinc-900/40 border border-white/5 rounded-[5px] overflow-hidden relative ${isStoryViewerExpanded ? 'z-20' : ''}`}>
+            <div className="absolute top-2 right-2 z-30">
+              <button
+                onClick={() => setIsStoryViewerExpanded((prev) => !prev)}
+                className="p-2 bg-black/40 border border-white/10 rounded-lg text-zinc-300 hover:text-white hover:border-white/30 transition-all"
+                title={isStoryViewerExpanded ? 'Split View' : 'Expand Viewer'}
+              >
+                {isStoryViewerExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+            </div>
+            {!isStoryViewerLoaded && <div className="absolute inset-0 bg-[#050505]" />}
+            <iframe
+              ref={storyViewerFrameRef}
+              onLoad={() => handleStoryFrameLoad(storyViewerFrameRef, () => setIsStoryViewerLoaded(true))}
+              title="Story Viewer"
+              src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=gallery`}
+              className="w-full h-full border-0 bg-[#050505]"
+            />
+          </section>
         </div>
       </main>
       ) : (
