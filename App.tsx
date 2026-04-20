@@ -217,6 +217,8 @@ const App: React.FC = () => {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const storyBuilderFrameRef = useRef<HTMLIFrameElement>(null);
   const storyViewerFrameRef = useRef<HTMLIFrameElement>(null);
+  const [isStoryBuilderLoaded, setIsStoryBuilderLoaded] = useState(false);
+  const [isStoryViewerLoaded, setIsStoryViewerLoaded] = useState(false);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpscaling, setIsUpscaling] = useState(false);
@@ -873,7 +875,10 @@ const App: React.FC = () => {
     frameWindow.postMessage({ type: 'conceptbug_api_credential', credential: appPassword || '' }, '*');
   };
 
-  const handleStoryFrameLoad = (frameRef: React.RefObject<HTMLIFrameElement>) => {
+  const handleStoryFrameLoad = (
+    frameRef: React.RefObject<HTMLIFrameElement>,
+    onLoaded?: () => void
+  ) => {
     try {
       const frameDoc = frameRef.current?.contentDocument;
       if (!frameDoc) return;
@@ -882,14 +887,45 @@ const App: React.FC = () => {
         const style = frameDoc.createElement('style');
         style.id = 'conceptbug-embed-style';
         style.textContent = `
-          html, body { background:#050505 !important; color:#e5e5e5 !important; font-family: Inter, sans-serif !important; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
-          * { border-radius: inherit; }
+          html, body {
+            background:#050505 !important;
+            color:#e5e5e5 !important;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+          }
+          nav, main, header, section, article, aside, div[class*="bg-[#1a1a1a]"], div[class*="bg-[#121212]"] {
+            background-color: rgba(24,24,27,0.58) !important;
+            border-color: rgba(255,255,255,0.08) !important;
+          }
+          button, input, textarea, select {
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            border-radius: 10px !important;
+          }
+          button {
+            transition: all .18s ease !important;
+          }
+          button[class*="bg-white"] {
+            background: rgba(255,255,255,0.92) !important;
+            color: #0f172a !important;
+          }
+          button[class*="hover:bg-white/"] {
+            color: #fff !important;
+          }
+          input, textarea, select {
+            background: rgba(0,0,0,0.32) !important;
+            color: #e5e7eb !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+          }
+          ::-webkit-scrollbar { width: 4px; height: 4px; }
+          ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 999px; }
         `;
         frameDoc.head.appendChild(style);
       }
     } catch {}
 
     syncCredentialToFrame(frameRef);
+    onLoaded?.();
   };
 
   useEffect(() => {
@@ -1234,25 +1270,28 @@ const App: React.FC = () => {
           className="w-full h-full border-0 bg-transparent"
         />
       </main>
-      ) : activeAppTab === 'storybuilder' ? (
-      <main className="flex-1 h-full overflow-hidden">
-        <iframe
-          ref={storyBuilderFrameRef}
-          onLoad={() => handleStoryFrameLoad(storyBuilderFrameRef)}
-          title="Story Builder"
-          src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=editor`}
-          className="w-full h-full border-0 bg-transparent"
-        />
-      </main>
-      ) : activeAppTab === 'storyviewer' ? (
-      <main className="flex-1 h-full overflow-hidden">
-        <iframe
-          ref={storyViewerFrameRef}
-          onLoad={() => handleStoryFrameLoad(storyViewerFrameRef)}
-          title="Story Viewer"
-          src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=gallery`}
-          className="w-full h-full border-0 bg-transparent"
-        />
+      ) : activeAppTab === 'storybuilder' || activeAppTab === 'storyviewer' ? (
+      <main className="flex-1 h-full overflow-hidden relative bg-[#050505]">
+        <div className={`absolute inset-0 transition-opacity duration-150 ${activeAppTab === 'storybuilder' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          {!isStoryBuilderLoaded && <div className="absolute inset-0 bg-[#050505]" />}
+          <iframe
+            ref={storyBuilderFrameRef}
+            onLoad={() => handleStoryFrameLoad(storyBuilderFrameRef, () => setIsStoryBuilderLoaded(true))}
+            title="Story Builder"
+            src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=editor`}
+            className="w-full h-full border-0 bg-[#050505]"
+          />
+        </div>
+        <div className={`absolute inset-0 transition-opacity duration-150 ${activeAppTab === 'storyviewer' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          {!isStoryViewerLoaded && <div className="absolute inset-0 bg-[#050505]" />}
+          <iframe
+            ref={storyViewerFrameRef}
+            onLoad={() => handleStoryFrameLoad(storyViewerFrameRef, () => setIsStoryViewerLoaded(true))}
+            title="Story Viewer"
+            src={`${import.meta.env.BASE_URL}apps/story-builder/index.html?mode=gallery`}
+            className="w-full h-full border-0 bg-[#050505]"
+          />
+        </div>
       </main>
       ) : (
       <main className="flex-1 h-full overflow-hidden">
