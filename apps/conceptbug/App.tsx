@@ -219,8 +219,6 @@ const App: React.FC = () => {
   const [isStoryBuilderLoaded, setIsStoryBuilderLoaded] = useState(false);
   const [isStoryViewerLoaded, setIsStoryViewerLoaded] = useState(false);
   const [isStoryViewerExpanded, setIsStoryViewerExpanded] = useState(false);
-  const [storySplitPercent, setStorySplitPercent] = useState(50);
-  const storySplitContainerRef = useRef<HTMLDivElement>(null);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpscaling, setIsUpscaling] = useState(false);
@@ -938,6 +936,7 @@ const App: React.FC = () => {
           }
           button {
             transition: color .18s ease, background-color .18s ease, border-color .18s ease, opacity .18s ease !important;
+            font-weight: 800 !important;
           }
           button[class*="bg-[#40a5cd]"], button[style*="40a5cd"] {
             background: var(--cb-accent) !important;
@@ -960,23 +959,6 @@ const App: React.FC = () => {
     syncCredentialToFrame(storyBuilderFrameRef);
     syncCredentialToFrame(storyViewerFrameRef);
   }, [appPassword]);
-
-  const startStoryResizing = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const onMove = (moveEvent: MouseEvent) => {
-      const el = storySplitContainerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const pct = ((moveEvent.clientX - rect.left) / rect.width) * 100;
-      setStorySplitPercent(Math.min(80, Math.max(20, pct)));
-    };
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-  };
 
   const selectedPhotoResult = photoResults[photoSelectedIndex];
 
@@ -1317,9 +1299,9 @@ const App: React.FC = () => {
       </main>
       ) : activeAppTab === 'storybuilder' ? (
       <main className="flex-1 h-full overflow-hidden relative">
-        <div ref={storySplitContainerRef} className="h-full flex gap-[10px]">
+        <div className="h-full flex gap-[10px]">
           {!isStoryViewerExpanded && (
-          <section style={{ width: `${storySplitPercent}%` }} className="h-full bg-zinc-900/40 border border-white/5 rounded-[5px] overflow-hidden relative">
+          <section style={{ width: '60%' }} className="h-full bg-zinc-900/40 border border-white/5 rounded-[5px] overflow-hidden relative">
             {!isStoryBuilderLoaded && <div className="absolute inset-0 bg-[#050505]" />}
             <iframe
               ref={storyBuilderFrameRef}
@@ -1330,16 +1312,7 @@ const App: React.FC = () => {
             />
           </section>
           )}
-          {!isStoryViewerExpanded && (
-          <div
-            onMouseDown={startStoryResizing}
-            className="w-[10px] h-full shrink-0 cursor-col-resize flex items-center justify-center"
-            title="Resize"
-          >
-            <div className="w-[2px] h-[56px] bg-white/20 rounded-full hover:bg-[#40a5cd] transition-colors" />
-          </div>
-          )}
-          <section style={{ width: isStoryViewerExpanded ? '100%' : `${100 - storySplitPercent}%` }} className={`h-full bg-zinc-900/40 border border-white/5 rounded-[5px] overflow-hidden relative ${isStoryViewerExpanded ? 'z-20' : ''}`}>
+          <section style={{ width: isStoryViewerExpanded ? '100%' : '40%' }} className={`h-full bg-zinc-900/40 border border-white/5 rounded-[5px] overflow-hidden relative ${isStoryViewerExpanded ? 'z-20' : ''}`}>
             <div className="absolute top-2 right-2 z-30">
               <button
                 onClick={() => setIsStoryViewerExpanded((prev) => !prev)}
