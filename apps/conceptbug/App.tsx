@@ -887,38 +887,64 @@ const App: React.FC = () => {
         const style = frameDoc.createElement('style');
         style.id = 'conceptbug-embed-style';
         style.textContent = `
+          :root {
+            --cb-bg: #050505;
+            --cb-panel: rgba(24, 24, 27, 0.58);
+            --cb-panel-soft: rgba(24, 24, 27, 0.4);
+            --cb-border: rgba(255, 255, 255, 0.10);
+            --cb-text: #e5e7eb;
+            --cb-text-sub: #a1a1aa;
+            --cb-accent: #40a5cd;
+            --cb-radius: 12px;
+          }
           html, body {
-            background:#050505 !important;
-            color:#e5e5e5 !important;
-            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            background: transparent !important;
+            color: var(--cb-text) !important;
+            font-family: Inter, "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
             text-rendering: optimizeLegibility;
             -webkit-font-smoothing: antialiased;
           }
-          nav, main, header, section, article, aside, div[class*="bg-[#1a1a1a]"], div[class*="bg-[#121212]"] {
-            background-color: rgba(24,24,27,0.58) !important;
-            border-color: rgba(255,255,255,0.08) !important;
+          main, section, article, aside, nav, header, footer {
+            border-color: var(--cb-border) !important;
           }
-          button, input, textarea, select {
-            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-            border-radius: 10px !important;
+          div[class*="bg-[#1a1a1a]"], div[class*="bg-[#121212]"], div[class*="bg-white/[0.02]"], div[class*="bg-white/5"] {
+            background-color: var(--cb-panel) !important;
+            border-color: var(--cb-border) !important;
           }
-          button {
-            transition: all .18s ease !important;
+          div[class*="border-white/5"], div[class*="border-white/10"] {
+            border-color: var(--cb-border) !important;
           }
-          button[class*="bg-white"] {
-            background: rgba(255,255,255,0.92) !important;
-            color: #0f172a !important;
-          }
-          button[class*="hover:bg-white/"] {
+          h1, h2, h3, h4, h5, h6, strong {
             color: #fff !important;
           }
+          p, span, label, small {
+            color: var(--cb-text-sub);
+          }
+          button, input, textarea, select {
+            font-family: Inter, "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            border-radius: var(--cb-radius) !important;
+          }
           input, textarea, select {
-            background: rgba(0,0,0,0.32) !important;
-            color: #e5e7eb !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
+            background: rgba(0, 0, 0, 0.5) !important;
+            border: 1px solid var(--cb-border) !important;
+            color: #fff !important;
+            outline: none !important;
+          }
+          input:focus, textarea:focus, select:focus {
+            border-color: var(--cb-accent) !important;
+            box-shadow: 0 0 0 1px var(--cb-accent) !important;
+          }
+          button {
+            transition: color .18s ease, background-color .18s ease, border-color .18s ease, opacity .18s ease !important;
+          }
+          button[class*="bg-[#40a5cd]"], button[style*="40a5cd"] {
+            background: var(--cb-accent) !important;
+            border-color: var(--cb-accent) !important;
+            color: #fff !important;
           }
           ::-webkit-scrollbar { width: 4px; height: 4px; }
-          ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 999px; }
+          ::-webkit-scrollbar-track { background: transparent; }
+          ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         `;
         frameDoc.head.appendChild(style);
       }

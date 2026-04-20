@@ -1,0 +1,1469 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Photographer Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-color: rgba(24, 24, 27, 0.4);
+            --accent-color: #40a5cd;
+            --text-color: #e4e4e7;
+            --line-color: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+            overflow: hidden; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+            -webkit-font-smoothing: antialiased; /* 폰트를 더 매끄럽고 정교하게 표현 */
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+		::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .card {
+            background: var(--panel-color);
+            border: 1px solid var(--line-color);
+            border-radius: 5px;
+            backdrop-filter: blur(3px);
+        }
+
+        #viewport-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #2d3748 0%, #000000 100%);
+            border-radius: 5px;
+            border: 1px solid var(--line-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #viewport-container {
+            border: 1px solid rgba(255,255,255,0.22); 
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            transition: width 0.3s, height 0.3s;
+            position: relative;
+            background: transparent;
+        }
+        
+        #grid-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            display: none;
+            z-index: 5;
+        }
+        .grid-line-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.25); }
+        .grid-line-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.25); }
+
+        canvas { display: block; outline: none; }
+
+        .btn-select {
+            transition: all 0.2s;
+            border: 1px solid var(--line-color);
+            background: rgba(255,255,255,0.03);
+            color: #a1a1aa;
+        }
+        .btn-select:hover {
+            border-color: var(--accent-color);
+            color: white;
+            background: rgba(255,255,255,0.09);
+        }
+        .btn-select.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 0 14px rgba(64, 165, 205, 0.38);
+        }
+
+        .visual-card {
+            position: relative;
+            cursor: pointer;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            background: #000;
+        }
+        .visual-card img {
+            width: 100%; height: 100%; object-fit: cover;
+            filter: brightness(0.6); transition: filter 0.3s;
+        }
+        .visual-card:hover img { filter: brightness(0.3); }
+        .visual-card.active { border-color: var(--accent-color); }
+        .visual-card.active img { filter: brightness(0.8); }
+        
+        .visual-label {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            color: white; font-size: 11px; font-weight: bold;
+            padding: 4px; text-align: center; pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        
+        .visual-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px; text-align: center;
+            opacity: 0; transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .visual-card:hover .visual-overlay { opacity: 1; }
+        .visual-desc {
+            color: #fff; font-size: 10px; line-height: 1.3; font-weight: 500;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .card-portrait { aspect-ratio: 2/3; }
+        .card-landscape { aspect-ratio: 16/9; }
+
+        .ar-icon {
+            border: 1px solid #4a5568;
+            background: #2d3748;
+            margin: 0 auto 3px;
+        }
+        .active .ar-icon { background: #fff; border-color: #fff; }
+
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px;
+            border-radius: 50%; background: #fff;
+            border: 2px solid var(--accent-color); margin-top: -5px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; background: #4a5568; border-radius: 2px;
+        }
+        .kelvin-track::-webkit-slider-runnable-track {
+            background: linear-gradient(90deg, #ff8a00 0%, #ffffff 50%, #4a9eff 100%);
+            height: 6px;
+        }
+        .spectrum-bar {
+            width: 100%; height: 8px; margin-top: 6px; border-radius: 2px;
+            background: linear-gradient(90deg, #ff3300 0%, #ff8a00 20%, #ffffff 50%, #4a9eff 80%, #0066ff 100%);
+            opacity: 0.8;
+        }
+
+        .scroll-col { overflow-y: auto; height: 100%; padding-right: 4px; }
+
+        .vp-btn {
+            position: absolute; top: 10px; 
+            background: rgba(0,0,0,0.6); color: white;
+            border: 1px solid #444; padding: 4px 10px;
+            border-radius: 4px; font-size: 11px; cursor: pointer; z-index: 10;
+            transition: all 0.2s;
+        }
+        .vp-btn:hover { background: var(--accent-color); }
+        .vp-btn.active { background: var(--accent-color); border-color: white; }
+
+        .custom-input {
+            background: #222; border: 1px solid #4a5568; color: #fff;
+            padding: 2px 6px; border-radius: 4px; font-size: 14px; font-family: monospace; font-weight: bold;
+            text-align: center; width: 55px;
+        }
+        .custom-input:focus { outline: none; border-color: var(--accent-color); }
+
+        .knob-container {
+            position: relative; display: flex; flex-direction: column; align-items: center; cursor: ew-resize; 
+        }
+        .knob-circle {
+            border-radius: 50%;
+            background: radial-gradient(145deg, #2a2d35, #181a1f);
+            box-shadow: 4px 4px 8px #0e0f12, -4px -4px 8px #262a32;
+            position: relative; border: 2px solid #374151; transition: border-color 0.2s;
+        }
+        .knob-container:hover .knob-circle { border-color: var(--accent-color); }
+        .knob-container:active .knob-circle { border-color: #fff; }
+        .knob-indicator {
+            position: absolute; top: 50%; left: 50%; height: 3px; background: var(--accent-color);
+            transform-origin: left center; pointer-events: none; border-radius: 2px;
+        }
+        .knob-value-label {
+            margin-top: 6px; font-family: monospace; font-size: 11px; font-weight: bold; color: #e2e8f0; text-align: center;
+        }
+        .knob-sub-label {
+            font-size: 9px; color: var(--accent-color); text-align: center; height: 12px;
+        }
+
+        .archive-thumb {
+            position: relative;
+            overflow: hidden;
+            border-radius: 6px;
+            border: 1px solid #2d3748;
+            background: #000;
+            transition: border-color 0.2s;
+        }
+        .archive-thumb:hover { border-color: #4a5568; }
+        .archive-thumb.active {
+            border-color: #e2e8f0;
+            box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.25);
+        }
+        .archive-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 1px solid #2d3748;
+            background: rgba(0,0,0,0.65);
+            color: #fff;
+            font-size: 11px;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+        .archive-thumb:hover .archive-delete { opacity: 1; }
+        .archive-delete:hover { background: rgba(239,68,68,0.9); }
+        #resultModal[hidden] { display: none !important; }
+
+        /* Creator Signature */
+        .creator-sig { display: none; }
+    </style>
+</head>
+<body class="w-full h-screen">
+
+    <div id="studioLayout" class="flex gap-[10px] h-screen items-stretch">
+
+        <!-- COL 1 (fixed) -->
+        <div class="w-[300px] flex-none h-full">
+            <div class="card p-3 h-full overflow-y-auto">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c2-4 14-4 16 0"/></svg>
+                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Subject</h2>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2" id="subjectGrid"></div>
+                    <div class="pt-2 border-t border-white/10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v4"/><path d="M6.5 6.5l2.8 2.8"/><path d="M3 12h4"/><path d="M6.5 17.5l2.8-2.8"/><path d="M12 17v4"/><path d="M17.5 17.5l-2.8-2.8"/><path d="M17 12h4"/><path d="M17.5 6.5l-2.8 2.8"/></svg>
+                            <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Style</h2>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2" id="subModeGrid"></div>
+                    </div>
+                </div>
+                <div class="pt-3 mt-3 border-t border-white/10">
+                    <div class="flex items-center gap-2 mb-3">
+                        <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h4l2-2h4l2 2h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Camera</h2>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2" id="cameraGrid"></div>
+                </div>
+                <div class="pt-3 mt-3 border-t border-white/10 space-y-2">
+                    <div class="flex justify-between items-center w-full mb-1">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2 2 0 0 0-4 0v11.26a4 4 0 1 0 4 0z"/><path d="M12 9v7"/></svg>
+                            <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Temp</h2>
+                        </div>
+                        <span id="tempDisplayCombined" class="text-sm font-bold font-mono transition-colors text-orange-400">5500K - Daylight</span>
+                    </div>
+                    <input type="range" id="tempSlider" min="1500" max="10000" value="5500" step="100" class="kelvin-track">
+                    <div class="spectrum-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COL 2: Viewport + Archive (same split concept as ConceptBug) -->
+        <div id="centerSplit" class="flex-grow h-full min-w-0 flex flex-col gap-0 overflow-hidden">
+            <section id="viewportPanel" class="card relative overflow-hidden flex items-center justify-center" style="height:67%;">
+                <div id="viewport-wrapper">
+                    <div id="viewport-container">
+                        <div id="grid-overlay">
+                            <div class="grid-line-v" style="left: 33.3%;"></div><div class="grid-line-v" style="left: 66.6%;"></div>
+                            <div class="grid-line-h" style="top: 33.3%;"></div><div class="grid-line-h" style="top: 66.6%;"></div>
+                        </div>
+                        <button class="vp-btn right-2" onclick="resetCamera()">Reset</button>
+                        <button class="vp-btn left-2" id="gridBtn" onclick="toggleGrid()"># Grid</button>
+                        <div class="absolute bottom-2 left-2 text-xs font-mono text-cyan-300 bg-black/50 px-2 py-1 rounded pointer-events-none z-10">
+                            <span id="debug-angle">Front</span> | <span id="debug-comp">Center</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div id="centerDivider" class="w-full h-[10px] flex items-center justify-center">
+                <div class="h-[2px] w-12 bg-white/10 rounded-full"></div>
+            </div>
+            <section id="archivePanel" class="card p-3 flex flex-col gap-2 overflow-hidden" style="height:33%;">
+                <div class="flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <button id="archiveModeBtn" class="p-1 rounded-md transition-all hover:bg-white/5 text-zinc-600 hover:text-white" title="Toggle archive orientation">
+                            <svg id="archiveModeIcon" class="w-3 h-3 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>
+                            </svg>
+                        </button>
+                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">Archive</h2>
+                    </div>
+                </div>
+                <div id="archiveGrid" class="flex-1 overflow-y-auto pr-1"></div>
+            </section>
+        </div>
+
+        <!-- COL 3 (300px) : Ratio, Lens, Effects -->
+        <div class="w-[12%] flex-none h-full flex flex-col gap-[10px] min-h-0">
+            
+            <!-- 2. Ratio (Moved to Right in v25) -->
+            <div class="card p-3 space-y-3">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10"/><path d="M7 15h6"/></svg>
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Output Settings</h2>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5" id="ar-grid"></div>
+            </div>
+
+            <!-- 3. Lens (Moved to Right in v25) -->
+            <div class="card p-3 space-y-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M3 12h2"/><path d="M19 12h2"/></svg>
+                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Lens</h2>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <input type="number" id="customFocal" class="custom-input" value="35">
+                        <span class="text-xs text-gray-500">mm</span>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center justify-center py-2">
+                    <div id="lens-knob" class="knob-container">
+                        <div class="knob-circle w-24 h-24"><div class="knob-indicator w-10 left-[50%]"></div></div>
+                    </div>
+                    <span id="focalDisplay" class="text-2xl font-bold text-cyan-300 font-mono mt-2">35mm</span>
+                    <span class="text-[10px] text-gray-500">Standard View</span>
+                </div>
+            </div>
+
+            <!-- 6. Effects -->
+            <div class="card p-3 flex-1 min-h-0 flex flex-col">
+                <div class="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                    <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3"/><path d="M12 18v3"/><path d="M3 12h3"/><path d="M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Effects</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-y-6 gap-x-2 pt-4">
+                    <div class="knob-container" id="knob-aperture"><span class="text-[10px] font-bold text-gray-400 mb-1">Aperture</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-aperture">f/8</div><div class="knob-sub-label" id="sub-aperture">Std</div></div>
+                    <div class="knob-container" id="knob-shutter"><span class="text-[10px] font-bold text-gray-400 mb-1">Shutter</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-shutter">1/250</div><div class="knob-sub-label" id="sub-shutter">Std</div></div>
+                    <div class="knob-container" id="knob-vignette"><span class="text-[10px] font-bold text-gray-400 mb-1">Vignette</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-vignette">0%</div><div class="knob-sub-label" id="sub-vignette">None</div></div>
+                    <div class="knob-container" id="knob-chromatic"><span class="text-[10px] font-bold text-gray-400 mb-1">Chromatic</span><div class="knob-circle w-14 h-14"><div class="knob-indicator w-6 left-[50%]"></div></div><div class="knob-value-label" id="val-chromatic">0%</div><div class="knob-sub-label" id="sub-chromatic">Clean</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COL 4 : Prompt -->
+        <div class="w-[15%] flex-none flex flex-col gap-[10px] h-full overflow-hidden">
+            <section class="card p-3 shrink-0">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-3.5 h-3.5 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
+                    <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Subject Prompt</h2>
+                </div>
+                <textarea id="subjectDetail" placeholder="사진 프롬프트를 직접 입력하세요..." 
+                class="w-full bg-black/50 border border-white/10 rounded text-xs p-2 text-white focus:border-[#40a5cd] outline-none resize-none h-64"></textarea>
+            </section>
+
+            <section class="flex-1 bg-zinc-900/10 border border-white/5 rounded-[5px] p-3 flex flex-col gap-3 overflow-hidden">
+                <div class="flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-700">PROMPT PREVIEW</h2>
+                    </div>
+                    <button id="copyBtn" class="p-1.5 rounded-lg transition-all hover:bg-white/5 text-zinc-600" title="Copy to clipboard">
+                        <svg id="copyIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                    <p id="finalOutputDisplay" class="text-[10px] leading-[1.6] text-white/20 selection:bg-white/10 whitespace-pre-wrap">No content synergy yet. Start building your scenario.</p>
+                </div>
+                <textarea id="finalOutput" readonly class="hidden"></textarea>
+            </section>
+
+            <div class="shrink-0 flex flex-col gap-3">
+                <button id="generateBtn" class="w-full h-10 rounded-xl bg-[#40a5cd] hover:bg-[#358eb0] text-white font-black text-[12px] transition-all active:scale-[0.98] shadow-2xl uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                    <svg class="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+                    <span>Generate</span>
+                </button>
+                <div id="genError" class="hidden p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] rounded-xl text-center font-black uppercase tracking-widest"></div>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Signature -->
+    <div class="creator-sig">Created by Lee Seongwon</div>
+
+    <div id="resultModal" hidden class="fixed inset-0 bg-black/70 z-[80] p-6">
+        <div class="w-full h-full card p-3 flex flex-col">
+            <div class="flex-1 min-h-0 bg-black rounded-lg flex items-center justify-center overflow-hidden">
+                <img id="resultModalImage" src="" alt="Generated" class="max-w-full max-h-full object-contain" />
+            </div>
+            <div class="pt-3 flex justify-end gap-2">
+                <a id="resultDownload" href="#" download="photo_result.jpg" class="px-3 py-2 bg-white/5 border border-white/10 rounded text-xs font-bold uppercase tracking-wider">Download</a>
+                <button id="closeModalBtn" class="px-3 py-2 bg-white/5 border border-white/10 rounded text-xs font-bold uppercase tracking-wider">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- UPDATED IMAGE LINKS (v30) ---
+        const IMAGES = {
+            human: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_120/img_human_fq9npj.jpg",
+            product: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_120/img_product_ypq2iw.jpg",
+            landscape: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_120/img_landscape_nabldb.jpg",
+            canon: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_cannon_g4g4jk.jpg",
+			sony: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_sony_vvhsub.jpg", 
+            nikon: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_nikon_pxeuvy.jpg",
+            fuji: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_fuji_sadtxl.jpg",
+            kodak: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_portra_amuqre.jpg", 
+            imax: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_IMAX_ticw5q.jpg",
+            candid: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_candid_lcgzjf.jpg",
+            pro: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/image_pro_zucqlk.jpg",
+            selfie: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_selfie_d8oejw.jpg",
+            paparazzi: "https://res.cloudinary.com/dk4jmkujd/image/upload/w_150/img_paparazzi_gbtcnu.jpg",
+            goods: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=150&q=60", 
+            food: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=60",
+            furn: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=150&q=60",
+            car: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=150&q=60",
+            studio: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=150&q=60",
+            trip: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=150&q=60",
+            // FIXED URBAN
+            city: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=150&q=60", 
+            nat: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=150&q=60"
+        };
+        const getImg = (id) => IMAGES[id] || IMAGES['canon'];
+
+        const SUBJECTS = [
+            { id: 'human', label: '인물', img: 'human' },
+            { id: 'product', label: '제품', img: 'product' },
+            { id: 'landscape', label: '배경', img: 'landscape' }
+        ];
+        
+        const SUB_MODES = {
+            human: [
+                {id: 'candid', label: 'Candid', img: 'candid', kw: 'candid shot, natural moment, unposed, authentic emotion, slice of life'},
+                {id: 'pro', label: 'Professional', img: 'pro', kw: 'editorial fashion photography, studio lighting, magazine quality, sharp focus, perfectly styled'},
+                {id: 'selfie', label: 'Selfie', img: 'selfie', kw: 'selfie angle, arm extension perspective, POV shot, holding camera, casual self-portrait'},
+                {id: 'paparazzi', label: 'Paparazzi', img: 'paparazzi', kw: 'paparazzi style, telephoto compression, caught off guard, raw and gritty, high iso grain'}
+            ],
+            product: [
+                {id: 'goods', label: 'Goods', img: 'goods', kw: 'commercial product photography, clean background, sharp details, advertising quality'},
+                {id: 'food', label: 'Food', img: 'food', kw: 'gourmet food photography, appetizing, macro details, steam, fresh ingredients'},
+                {id: 'furn', label: 'Furniture', img: 'furn', kw: 'interior design photography, wide angle, architectural lines, cozy atmosphere'},
+                {id: 'car', label: 'Vehicle', img: 'car', kw: 'automotive photography, dynamic angle, motion blur background, reflections on metal'}
+            ],
+            landscape: [
+                {id: 'studio', label: 'Studio', img: 'studio', kw: 'empty studio background, seamless backdrop, controlled lighting, minimal setting'},
+                {id: 'trip', label: 'Trip', img: 'trip', kw: 'travel photography, exotic location, capturing local culture, vivid colors, national geographic style'},
+                {id: 'city', label: 'Urban', img: 'city', kw: 'cityscape, street photography, concrete jungle, neon lights, busy atmosphere'},
+                {id: 'nat', label: 'Nature', img: 'nat', kw: 'landscape photography, pristine nature, organic textures, scenic view, vast scale'}
+            ]
+        };
+
+        const CAMERAS = [
+            {id:'canon',label:'Canon R5',img:'canon',kw:'shot on Canon EOS R5, 8k resolution, highly detailed, realistic texture, color graded in Capture One', desc:'Highly detailed, realistic textures.'},
+            {id:'sony',label:'Sony A7R',img:'sony',kw:'Sony A7R IV, razor sharp focus, modern digital look, vibrant dynamic range, clean shadows', desc:'Razor sharp, high contrast.'},
+            {id:'nikon',label:'Nikon',img:'nikon',kw:'Nikon D850, incredibly sharp, neutral color profile, pristine clarity, professional photography', desc:'Pristine clarity, neutral color.'},
+            {id:'fuji',label:'Fujifilm',img:'fuji',kw:'Fujifilm X-T4, Classic Chrome simulation, film grain, sentimental atmosphere, rich greens and teals', desc:'Analog film simulation, soft grain.'},
+            {id:'kodak',label:'Portra',img:'kodak',kw:'analog film photography, Kodak Portra 400, warm skin tones, fine grain, nostalgic feel, soft highlights', desc:'Vintage warmth, nostalgic film.'},
+            {id:'imax',label:'IMAX',img:'imax',kw:'shot on IMAX 70mm, epic scale, cinematic lighting, vast dynamic range, highly detailed background', desc:'Epic scale, cinematic depth.'}
+        ];
+        
+        const ASPECT_RATIOS = [{label:'21:9',w:21,h:9,val:'21:9'},{label:'16:9',w:16,h:9,val:'16:9'},{label:'3:2',w:3,h:2,val:'3:2'},{label:'4:3',w:4,h:3,val:'4:3'},{label:'1:1',w:1,h:1,val:'1:1'},{label:'3:4',w:3,h:4,val:'3:4'},{label:'2:3',w:2,h:3,val:'2:3'},{label:'9:16',w:9,h:16,val:'9:16'},{label:'9:21',w:9,h:21,val:'9:21'}];
+
+        const FOCAL_STEPS = [8, 16, 24, 35, 50, 85, 200];
+        const FOCAL_KW = {
+            8: "extreme fisheye distortion, spherical warping, 180 degree panoramic field of view",
+            16: "ultra-wide angle perspective, dramatic depth exaggeration, expansive environmental context",
+            24: "wide angle framing, environmental storytelling, noticeable perspective pull",
+            35: "natural street photography perspective, balanced proportions, classic documentary look",
+            50: "standard human eye perspective, neutral compression, honest rendering of proportions",
+            85: "portrait telephoto compression, flattering facial proportions, gentle background separation",
+            200: "extreme telephoto compression, background appears very close to subject, very narrow field of view"
+        };
+
+        const APERTURES = [22, 16, 11, 8, 5.6, 4, 2.8, 1.8, 1.2];
+        const AP_LABELS = ['Deep', 'Sharp', 'Sharp', 'Std', 'Natural', 'Soft', 'Bokeh', 'Blur', 'Dreamy'];
+        const SHUTTERS = ['1/8000', '1/4000', '1/1000', '1/250', '1/60', '1/15', '1"', '30"'];
+        const SH_LABELS = ['Frozen', 'Sharp', 'Action', 'Std', 'Motion', 'Blur', 'Long', 'Silk'];
+        const VIG_LABELS = ['None', 'Subtle', 'Moderate', 'Strong', 'Heavy'];
+        const CHR_LABELS = ['Clean', 'Subtle', 'Noticeable', 'Glitch', 'Broken'];
+        const API_BASE_URL = 'https://conceptbug-backend.persona-worker.workers.dev';
+        const MODEL_ID = 'gemini-3.1-flash-image-preview';
+        const IMAGE_SIZE = '1K';
+
+        let state = {
+            subjectMode: 'human',
+            subMode: SUB_MODES.human[1],
+            ar: ASPECT_RATIOS[1],
+            camera: CAMERAS[0],
+            focal: 35,
+            temp: 5500,
+            eff: { apertureIdx: 3, shutterIdx: 3, vignetteIdx: 0, chromaticIdx: 0 },
+            shotSize: 'Medium Shot',
+            angleString: 'Front View',
+            composition: 'Centered',
+            genMode: 'create'
+        };
+
+        let scene, camera, renderer, controls;
+        let archiveSideMode = false;
+        let splitPercent = 67;
+        let archiveItems = [];
+        let subjects = {}, mainLight, ambientLight;
+        const $ = id => document.getElementById(id);
+
+        function initApp() {
+            createSubjectCards();
+            updateSubModeGrid();
+            createARButtons();
+            createCameraCards();
+            initThreeJS();
+            animate();
+            
+            initDragKnob('lens-knob', (pct) => {
+                const stepCount = FOCAL_STEPS.length - 1;
+                const idx = Math.round(pct * stepCount);
+                const val = FOCAL_STEPS[idx];
+                state.focal = val;
+                $('customFocal').value = val;
+                $('focalDisplay').innerText = val + "mm";
+                camera.setFocalLength(val);
+                // Update lens description label
+                const lensLabels = {8:'Fisheye',16:'Ultra Wide',24:'Wide',35:'Standard',50:'Normal',85:'Portrait',200:'Telephoto'};
+                const descEl = $('focalDisplay').nextElementSibling;
+                if(descEl) descEl.innerText = lensLabels[val] || `${val}mm`;
+                updatePrompt();
+                return idx / stepCount; 
+            });
+
+            initDragKnob('knob-aperture', (pct) => {
+                const idx = Math.round(pct * (APERTURES.length - 1));
+                state.eff.apertureIdx = idx;
+                $('val-aperture').innerText = "f/" + APERTURES[idx];
+                $('sub-aperture').innerText = AP_LABELS[idx];
+                updatePrompt();
+                return idx / (APERTURES.length - 1);
+            });
+
+            initDragKnob('knob-shutter', (pct) => {
+                const idx = Math.round(pct * (SHUTTERS.length - 1));
+                state.eff.shutterIdx = idx;
+                $('val-shutter').innerText = SHUTTERS[idx];
+                $('sub-shutter').innerText = SH_LABELS[idx];
+                updatePrompt();
+                return idx / (SHUTTERS.length - 1);
+            });
+
+            initDragKnob('knob-vignette', (pct) => {
+                const idx = Math.round(pct * 4);
+                state.eff.vignetteIdx = idx;
+                $('val-vignette').innerText = (idx * 25) + "%";
+                $('sub-vignette').innerText = VIG_LABELS[idx];
+                updatePrompt();
+                return idx / 4;
+            });
+
+            initDragKnob('knob-chromatic', (pct) => {
+                const idx = Math.round(pct * 4);
+                state.eff.chromaticIdx = idx;
+                $('val-chromatic').innerText = (idx * 25) + "%";
+                $('sub-chromatic').innerText = CHR_LABELS[idx];
+                updatePrompt();
+                return idx / 4;
+            });
+
+            $('customFocal').addEventListener('input', (e) => {
+                let val = parseInt(e.target.value);
+                if(val && val > 0) {
+                    state.focal = val;
+                    camera.setFocalLength(val);
+                    $('focalDisplay').innerText = val + "mm";
+                    updatePrompt();
+                }
+            });
+
+            $('tempSlider').addEventListener('input', (e) => {
+                state.temp = parseInt(e.target.value);
+                updateColorTemp(state.temp);
+                updatePrompt();
+            });
+
+            $('subjectDetail').addEventListener('input', updatePrompt);
+            $('copyBtn').addEventListener('click', async () => {
+                const value = ($('finalOutput').value || '').trim();
+                if (!value) return;
+                try {
+                    await navigator.clipboard.writeText(value);
+                    const icon = $('copyIcon');
+                    if (icon) {
+                        icon.innerHTML = '<path d="M20 6 9 17l-5-5"></path>';
+                        window.setTimeout(() => {
+                            icon.innerHTML = '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>';
+                        }, 1200);
+                    }
+                } catch {
+                    $('finalOutput').select();
+                    document.execCommand('copy');
+                }
+            });
+            $('archiveModeBtn').addEventListener('click', toggleArchiveMode);
+            $('generateBtn').addEventListener('click', handleGenerate);
+            $('closeModalBtn').addEventListener('click', closeResultModal);
+            $('resultModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) closeResultModal();
+            });
+            window.addEventListener('resize', resizeViewport);
+            applyCenterSplitMode();
+            renderArchive();
+            updatePrompt();
+        }
+
+        function showGenError(message) {
+            const errorEl = $('genError');
+            if (!errorEl) return;
+            if (!message) {
+                errorEl.classList.add('hidden');
+                errorEl.textContent = '';
+                return;
+            }
+            errorEl.classList.remove('hidden');
+            errorEl.textContent = message;
+        }
+
+        function openResultModal(imageUrl, fileName) {
+            const modal = $('resultModal');
+            const img = $('resultModalImage');
+            const download = $('resultDownload');
+            img.src = imageUrl;
+            download.href = imageUrl;
+            download.download = fileName;
+            modal.hidden = false;
+        }
+
+        function closeResultModal() {
+            $('resultModal').hidden = true;
+        }
+
+        function renderArchive() {
+            const grid = $('archiveGrid');
+            if (!grid) return;
+
+            if (!archiveItems.length) {
+                grid.className = 'flex-1 overflow-y-auto pr-1';
+                grid.innerHTML = '<div class="h-full w-full flex items-center justify-center opacity-10"><span class="font-black uppercase tracking-[0.4em] text-2xl">EMPTY</span></div>';
+                return;
+            }
+
+            const cols = archiveSideMode ? 'grid-cols-2' : 'grid-cols-6';
+            grid.className = `flex-1 overflow-y-auto pr-1 grid gap-2 ${cols}`;
+            grid.innerHTML = '';
+            archiveItems.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `archive-thumb ${index === 0 ? 'active' : ''}`;
+                card.innerHTML = `
+                    <button class="archive-delete" title="Delete">×</button>
+                    <img src="${item.url}" class="w-full aspect-square object-cover block" alt="" />
+                    <div class="text-[9px] text-gray-400 py-1 bg-black/40 text-center">${item.duration}s</div>
+                `;
+                card.addEventListener('click', () => {
+                    openResultModal(item.url, item.fileName);
+                });
+                card.querySelector('.archive-delete').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    archiveItems = archiveItems.filter((_, idx) => idx !== index);
+                    renderArchive();
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        function applyCenterSplitMode() {
+            const centerSplit = $('centerSplit');
+            const viewportPanel = $('viewportPanel');
+            const archivePanel = $('archivePanel');
+            const divider = $('centerDivider');
+            const archiveModeIcon = $('archiveModeIcon');
+            if (!centerSplit || !viewportPanel || !archivePanel || !divider) return;
+
+            if (archiveSideMode) {
+                centerSplit.classList.remove('flex-col');
+                centerSplit.classList.add('flex-row');
+                divider.className = 'w-[10px] h-full flex items-center justify-center';
+                divider.innerHTML = '<div class="w-[2px] h-12 bg-white/10 rounded-full"></div>';
+                viewportPanel.style.width = `${splitPercent}%`;
+                viewportPanel.style.height = '100%';
+                archivePanel.style.width = `${100 - splitPercent}%`;
+                archivePanel.style.height = '100%';
+                if (archiveModeIcon) archiveModeIcon.style.transform = 'rotate(90deg)';
+            } else {
+                centerSplit.classList.remove('flex-row');
+                centerSplit.classList.add('flex-col');
+                divider.className = 'w-full h-[10px] flex items-center justify-center';
+                divider.innerHTML = '<div class="h-[2px] w-12 bg-white/10 rounded-full"></div>';
+                viewportPanel.style.width = '100%';
+                viewportPanel.style.height = `${splitPercent}%`;
+                archivePanel.style.width = '100%';
+                archivePanel.style.height = `${100 - splitPercent}%`;
+                if (archiveModeIcon) archiveModeIcon.style.transform = 'rotate(0deg)';
+            }
+            resizeViewport();
+        }
+
+        function toggleArchiveMode() {
+            archiveSideMode = !archiveSideMode;
+            applyCenterSplitMode();
+            renderArchive();
+        }
+
+        async function handleGenerate() {
+            showGenError('');
+            const prompt = $('finalOutput').value.trim();
+            if (!prompt) {
+                showGenError('프롬프트가 비어 있습니다.');
+                return;
+            }
+
+            const credential = localStorage.getItem('conceptbug_api_credential') || '';
+            if (!credential) {
+                showGenError('API 키가 없습니다. 사이드바 열쇠 버튼에서 먼저 입력해 주세요.');
+                return;
+            }
+
+            const button = $('generateBtn');
+            const startedAt = Date.now();
+            const originalHtml = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<span>GENERATING...</span>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/generate-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-App-Password': credential,
+                    },
+                    body: JSON.stringify({
+                        prompt,
+                        model: MODEL_ID,
+                        aspectRatio: state.ar.val,
+                        imageSize: IMAGE_SIZE,
+                        referenceImages: [],
+                    }),
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data?.error || data?.message || `Request failed (${response.status})`);
+                }
+
+                const imageUrl = data.imageDataUrl || (data.imageBase64 ? `data:${data.mimeType || 'image/png'};base64,${data.imageBase64}` : '');
+                if (!imageUrl) throw new Error('No generated image returned.');
+
+                const now = new Date();
+                const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+                const fileName = `photographer_${stamp}.jpg`;
+                const duration = ((Date.now() - startedAt) / 1000).toFixed(1);
+
+                archiveItems.unshift({ url: imageUrl, duration, fileName, prompt, ts: Date.now() });
+                renderArchive();
+                openResultModal(imageUrl, fileName);
+            } catch (error) {
+                showGenError(error?.message || '이미지 생성 중 오류가 발생했습니다.');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalHtml;
+            }
+        }
+
+        function initDragKnob(id, onChange) {
+            const el = $(id);
+            const indicator = el.querySelector('.knob-indicator');
+            let isDragging = false;
+            let startX = 0;
+            let startPct = 0;
+            let currentPct = 0; 
+
+            if(id === 'lens-knob') currentPct = 3 / 6; 
+            else if(id === 'knob-aperture') currentPct = 3 / 8;
+            else if(id === 'knob-shutter') currentPct = 3 / 7;
+            
+            const updateVisual = (pct) => {
+                const ang = -135 + (pct * 270);
+                indicator.style.transform = `rotate(${ang}deg)`;
+            };
+            updateVisual(currentPct);
+
+            el.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startPct = currentPct;
+                document.body.style.cursor = 'ew-resize';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.clientX - startX;
+                const sensitivity = 200; 
+                let rawPct = startPct + (deltaX / sensitivity);
+                rawPct = Math.max(0, Math.min(1, rawPct));
+                const snappedPct = onChange(rawPct);
+                if(snappedPct !== undefined) {
+                    updateVisual(snappedPct);
+                } else {
+                    updateVisual(rawPct);
+                }
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                if(isDragging) {
+                    const deltaX = e.clientX - startX;
+                    let rawPct = startPct + (deltaX / 200);
+                    rawPct = Math.max(0, Math.min(1, rawPct));
+                    const snapped = onChange(rawPct);
+                    currentPct = (snapped !== undefined) ? snapped : rawPct;
+                    updateVisual(currentPct);
+                }
+                isDragging = false;
+                document.body.style.cursor = 'default';
+            });
+        }
+
+        function createSubjectCards() {
+            const grid = $('subjectGrid');
+            grid.innerHTML = '';
+            SUBJECTS.forEach(sub => {
+                const card = document.createElement('div');
+                card.className = `visual-card card-portrait ${sub.id === state.subjectMode ? 'active' : ''}`;
+                // Tooltip Overlay Structure
+                card.innerHTML = `
+                    <img src="${getImg(sub.img)}" alt="${sub.label}">
+                    <div class="visual-label">${sub.label}</div>
+                    <div class="visual-overlay bg-black/80">
+                        <div class="visual-desc">${sub.label} 설정</div>
+                    </div>
+                `;
+                card.onclick = () => { 
+                    Array.from(grid.children).forEach(c => c.classList.remove('active')); 
+                    card.classList.add('active'); 
+                    setSubject(sub.id); 
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function updateSubModeGrid() {
+            const grid = $('subModeGrid');
+            grid.innerHTML = '';
+            const options = SUB_MODES[state.subjectMode];
+            
+            if(!options.includes(state.subMode)) state.subMode = options[0];
+
+            options.forEach(opt => {
+                const card = document.createElement('div');
+                card.className = `visual-card card-landscape ${opt.id === state.subMode.id ? 'active' : ''}`;
+                card.innerHTML = `
+                    <img src="${getImg(opt.img)}" alt="${opt.label}">
+                    <div class="visual-label">${opt.label}</div>
+                `;
+                card.onclick = () => {
+                    Array.from(grid.children).forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    state.subMode = opt;
+                    updatePrompt();
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function createARButtons() {
+            const grid = $('ar-grid');
+            grid.innerHTML = '';
+            ASPECT_RATIOS.forEach(ar => {
+                const btn = document.createElement('button');
+                const isActive = ar.label === state.ar.label;
+                btn.className = `aspect-square rounded-lg border flex flex-col items-center justify-center text-[10px] font-black transition-all ${isActive ? 'bg-[#40a5cd] border-[#40a5cd] text-white shadow-2xl scale-[1.02]' : 'bg-white/5 border-white/5 text-zinc-600 hover:border-white/20'}`;
+                btn.onclick = () => { state.ar = ar; createARButtons(); resizeViewport(); updatePrompt(); };
+                const icon = document.createElement('div');
+                const iconClassMap = {
+                    '21:9': 'w-6 h-[10px]',
+                    '16:9': 'w-6 h-[14px]',
+                    '3:2': 'w-6 h-[16px]',
+                    '4:3': 'w-6 h-[18px]',
+                    '1:1': 'w-[18px] h-[18px]',
+                    '3:4': 'w-[18px] h-6',
+                    '2:3': 'w-[16px] h-6',
+                    '9:16': 'w-[14px] h-6',
+                    '9:21': 'w-[10px] h-6',
+                };
+                icon.className = `border-2 border-current rounded-[2px] mb-1.5 shadow-sm ${iconClassMap[ar.label] || 'w-[10px] h-6'}`;
+                const span = document.createElement('span');
+                span.className = 'font-black';
+                span.textContent = ar.label;
+                btn.appendChild(icon); btn.appendChild(span); grid.appendChild(btn);
+            });
+        }
+
+        function createCameraCards() {
+            const grid = $('cameraGrid');
+            grid.innerHTML = '';
+            CAMERAS.forEach(cam => {
+                const card = document.createElement('div');
+                card.className = `visual-card card-landscape ${cam.id === state.camera.id ? 'active' : ''}`;
+                card.innerHTML = `<img src="${getImg(cam.img)}" alt="${cam.label}"><div class="visual-label">${cam.label}</div><div class="visual-overlay bg-black/80"><div class="visual-desc">${cam.desc}</div></div>`;
+                card.onclick = () => { Array.from(grid.children).forEach(c => c.classList.remove('active')); card.classList.add('active'); state.camera = cam; updatePrompt(); };
+                grid.appendChild(card);
+            });
+        }
+
+        window.toggleGrid = () => { state.isGridOn = !state.isGridOn; $('grid-overlay').style.display = state.isGridOn ? 'block' : 'none'; $('gridBtn').classList.toggle('active'); };
+        window.setSubject = (mode) => { 
+            state.subjectMode = mode; 
+            Object.keys(subjects).forEach(key => { subjects[key].visible = (key === mode); }); 
+            if(mode === 'landscape') { controls.minDistance = 2; controls.maxDistance = 50; } 
+            else { controls.minDistance = 1; controls.maxDistance = 20; } 
+            updateSubModeGrid();
+            updatePrompt(); 
+        };
+        window.resetCamera = () => { camera.position.set(0, 1.6, 3.5); controls.target.set(0, 1, 0); controls.update(); };
+
+        function initThreeJS() {
+            const container = $('viewport-container'); scene = new THREE.Scene(); scene.background = null; 
+            camera = new THREE.PerspectiveCamera(35, 16/9, 0.1, 100); camera.setFocalLength(state.focal); camera.position.set(0, 1.6, 3.5);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); renderer.shadowMap.enabled = true; container.appendChild(renderer.domElement);
+            controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = 0.05; controls.target.set(0, 1, 0); controls.addEventListener('change', calculateMetrics);
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.45); scene.add(ambientLight);
+            mainLight = new THREE.DirectionalLight(0xffffff, 1.0); mainLight.position.set(5, 10, 7); mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 1024; mainLight.shadow.mapSize.height = 1024;
+            mainLight.shadow.camera.near = 0.5; mainLight.shadow.camera.far = 50;
+            mainLight.shadow.camera.left = -15; mainLight.shadow.camera.right = 15;
+            mainLight.shadow.camera.top = 15; mainLight.shadow.camera.bottom = -15;
+            mainLight.shadow.radius = 4;
+            mainLight.shadow.bias = -0.002;
+            scene.add(mainLight);
+            // Fill light from opposite side to soften shadows
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.3); fillLight.position.set(-4, 6, -3); scene.add(fillLight);
+            const grid = new THREE.GridHelper(20, 20, 0x444444, 0x222222); scene.add(grid);
+            createModels(); resizeViewport(); updateColorTemp(5500);
+        }
+
+        function createModels() {
+            const grayBase = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.5, metalness: 0.05 });
+            const grayLight = new THREE.MeshStandardMaterial({ color: 0x909090, roughness: 0.4, metalness: 0.05 });
+            const grayDark = new THREE.MeshStandardMaterial({ color: 0x6a6a6a, roughness: 0.6, metalness: 0.05 });
+            const grayWarm = new THREE.MeshStandardMaterial({ color: 0x8a7e78, roughness: 0.55, metalness: 0.05 });
+            const grayCool = new THREE.MeshStandardMaterial({ color: 0x727a82, roughness: 0.45, metalness: 0.1 });
+
+            // ===== HUMAN (stylized mannequin) =====
+            const hG = new THREE.Group();
+            
+            // Head - slightly elongated sphere
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.105, 32, 32), grayBase);
+            head.scale.set(1, 1.15, 0.95);
+            head.position.y = 1.68;
+            hG.add(head);
+
+            // Neck
+            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.1, 16), grayWarm);
+            neck.position.y = 1.56;
+            hG.add(neck);
+
+            // Torso (upper) - tapered
+            const torsoUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 0.25, 16), grayLight);
+            torsoUpper.position.y = 1.4;
+            hG.add(torsoUpper);
+
+            // Torso (lower) - slightly narrower
+            const torsoLower = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.14, 0.2, 16), grayLight);
+            torsoLower.position.y = 1.18;
+            hG.add(torsoLower);
+
+            // Shoulder joints (smooth spheres)
+            [-1, 1].forEach(side => {
+                const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 16), grayBase);
+                shoulder.position.set(side * 0.2, 1.48, 0);
+                hG.add(shoulder);
+
+                // Upper arm
+                const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.28, 12), grayBase);
+                upperArm.position.set(side * 0.22, 1.3, 0);
+                upperArm.rotation.z = side * 0.12;
+                hG.add(upperArm);
+
+                // Elbow
+                const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 12), grayWarm);
+                elbow.position.set(side * 0.24, 1.15, 0);
+                hG.add(elbow);
+
+                // Lower arm
+                const lowerArm = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.035, 0.26, 12), grayBase);
+                lowerArm.position.set(side * 0.25, 0.98, 0);
+                lowerArm.rotation.z = side * 0.05;
+                hG.add(lowerArm);
+
+                // Hand (flattened sphere)
+                const hand = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 12), grayWarm);
+                hand.scale.set(0.8, 1, 0.5);
+                hand.position.set(side * 0.26, 0.84, 0);
+                hG.add(hand);
+            });
+
+            // Hips
+            const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.13, 0.1, 16), grayLight);
+            hips.position.y = 1.05;
+            hG.add(hips);
+
+            // Legs
+            [-1, 1].forEach(side => {
+                // Upper leg
+                const upperLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.42, 12), grayBase);
+                upperLeg.position.set(side * 0.07, 0.78, 0);
+                hG.add(upperLeg);
+
+                // Knee
+                const knee = new THREE.Mesh(new THREE.SphereGeometry(0.04, 12, 12), grayWarm);
+                knee.position.set(side * 0.07, 0.56, 0);
+                hG.add(knee);
+
+                // Lower leg
+                const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.4, 12), grayBase);
+                lowerLeg.position.set(side * 0.07, 0.34, 0);
+                hG.add(lowerLeg);
+
+                // Foot
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.14), grayDark);
+                foot.position.set(side * 0.07, 0.12, 0.03);
+                hG.add(foot);
+            });
+
+            // Subtle face details
+            const noseBridge = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.018, 0.04, 8), grayWarm);
+            noseBridge.position.set(0, 1.66, 0.1);
+            noseBridge.rotation.x = -0.2;
+            hG.add(noseBridge);
+
+            // Hair volume (helmet-like)
+            const hair = new THREE.Mesh(new THREE.SphereGeometry(0.112, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.6), grayDark);
+            hair.position.y = 1.72;
+            hair.scale.set(1.05, 1.0, 1.0);
+            hG.add(hair);
+
+            // Base/stand
+            const standPole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.12, 8), grayDark);
+            standPole.position.y = 0.06;
+            hG.add(standPole);
+            const baseDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.02, 32), grayDark);
+            baseDisc.position.y = 0.01;
+            hG.add(baseDisc);
+
+            // All parts cast shadows
+            hG.traverse(child => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
+            scene.add(hG);
+            subjects.human = hG;
+
+            // ===== PRODUCT (Camera on table) =====
+            const pG = new THREE.Group();
+
+            // -- Table --
+            const tableMat = new THREE.MeshStandardMaterial({ color: 0x7a7570, roughness: 0.7, metalness: 0.0 });
+            const tableTop = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.04, 0.8), tableMat);
+            tableTop.position.y = 0.96;
+            tableTop.receiveShadow = true;
+            pG.add(tableTop);
+
+            // Table legs
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x6a6560, roughness: 0.7 });
+            [[-0.52, -0.32], [0.52, -0.32], [-0.52, 0.32], [0.52, 0.32]].forEach(([x, z]) => {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.94, 8), legMat);
+                leg.position.set(x, 0.47, z);
+                leg.castShadow = true;
+                pG.add(leg);
+            });
+
+            // -- Camera body --
+            const camBodyMat = new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.35, metalness: 0.2 });
+            const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.14), camBodyMat);
+            camBody.position.set(0, 1.06, 0);
+            // Rounded edges via beveling approximation
+            camBody.castShadow = true;
+            pG.add(camBody);
+
+            // Camera top plate (prism shape / pentaprism bump)
+            const pentaPrism = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.1), camBodyMat);
+            pentaPrism.position.set(0, 1.165, -0.005);
+            pentaPrism.castShadow = true;
+            pG.add(pentaPrism);
+
+            // Viewfinder bump
+            const viewfinder = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.035, 0.04), grayCool);
+            viewfinder.position.set(0, 1.16, -0.085);
+            pG.add(viewfinder);
+
+            // -- Lens barrel --
+            const lensMat = new THREE.MeshStandardMaterial({ color: 0x757575, roughness: 0.3, metalness: 0.3 });
+            // Main lens tube
+            const lensBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.065, 0.18, 24), lensMat);
+            lensBarrel.rotation.x = Math.PI / 2;
+            lensBarrel.position.set(0, 1.055, 0.16);
+            lensBarrel.castShadow = true;
+            pG.add(lensBarrel);
+
+            // Lens front element (glass)
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x3a4a5a, roughness: 0.1, metalness: 0.6 });
+            const lensFront = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.01, 24), glassMat);
+            lensFront.rotation.x = Math.PI / 2;
+            lensFront.position.set(0, 1.055, 0.255);
+            pG.add(lensFront);
+
+            // Lens ring (focus ring)
+            const ringMat = new THREE.MeshStandardMaterial({ color: 0x656565, roughness: 0.5, metalness: 0.15 });
+            const focusRing = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.03, 24), ringMat);
+            focusRing.rotation.x = Math.PI / 2;
+            focusRing.position.set(0, 1.055, 0.1);
+            pG.add(focusRing);
+
+            // Lens hood
+            const hoodMat = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.6 });
+            const lensHood = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.065, 0.04, 24), hoodMat);
+            lensHood.rotation.x = Math.PI / 2;
+            lensHood.position.set(0, 1.055, 0.275);
+            pG.add(lensHood);
+
+            // Grip (right side of camera body)
+            const gripMat = new THREE.MeshStandardMaterial({ color: 0x6e6e6e, roughness: 0.7, metalness: 0.05 });
+            const grip = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.17, 0.12), gripMat);
+            grip.position.set(0.155, 1.06, 0.005);
+            grip.castShadow = true;
+            pG.add(grip);
+
+            // Shutter button (on top)
+            const shutterBtn = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.008, 12), grayCool);
+            shutterBtn.position.set(0.12, 1.145, 0.015);
+            pG.add(shutterBtn);
+
+            // Mode dial
+            const modeDial = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.015, 16), grayCool);
+            modeDial.position.set(0.06, 1.148, 0.01);
+            pG.add(modeDial);
+
+            // Hot shoe
+            const hotShoe = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.005, 0.04), new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.4, roughness: 0.3 }));
+            hotShoe.position.set(0, 1.195, 0);
+            pG.add(hotShoe);
+
+            // Screen (back)
+            const screenMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.2, metalness: 0.1 });
+            const screen = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.005), screenMat);
+            screen.position.set(-0.01, 1.04, -0.073);
+            pG.add(screen);
+
+            pG.traverse(child => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
+            scene.add(pG);
+            subjects.product = pG;
+            pG.visible = false;
+
+            // ===== LANDSCAPE (Urban street scene) =====
+            const lG = new THREE.Group();
+
+            // Road surface
+            const roadMat = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.85 });
+            const road = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.02, 30), roadMat);
+            road.position.set(0, 0.01, -5);
+            road.receiveShadow = true;
+            lG.add(road);
+
+            // Sidewalk (both sides)
+            const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x7a7a7a, roughness: 0.7 });
+            [-1, 1].forEach(side => {
+                const sw = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 30), sidewalkMat);
+                sw.position.set(side * 2.5, 0.04, -5);
+                sw.receiveShadow = true;
+                lG.add(sw);
+            });
+
+            // Buildings (varied heights, widths, subtle tone differences)
+            const buildingConfigs = [
+                // Left side buildings
+                { x: -3.5, z: -12, w: 2.2, d: 2.5, h: 8, color: 0x6e6e6e },
+                { x: -4.0, z: -8, w: 2.8, d: 2.0, h: 5.5, color: 0x787878 },
+                { x: -3.8, z: -4, w: 2.5, d: 2.2, h: 10, color: 0x656565 },
+                { x: -3.5, z: 0, w: 2.0, d: 2.8, h: 6, color: 0x727272 },
+                { x: -4.2, z: 4, w: 3.0, d: 2.0, h: 12, color: 0x5e5e5e },
+                { x: -3.6, z: 8, w: 2.4, d: 2.5, h: 7, color: 0x6a6a6a },
+                // Right side buildings
+                { x: 3.5, z: -11, w: 2.5, d: 2.8, h: 9, color: 0x707070 },
+                { x: 4.0, z: -7, w: 2.2, d: 2.0, h: 6, color: 0x7c7c7c },
+                { x: 3.8, z: -3, w: 2.8, d: 2.5, h: 11, color: 0x626262 },
+                { x: 3.5, z: 1, w: 2.0, d: 3.0, h: 4.5, color: 0x757575 },
+                { x: 4.0, z: 5, w: 2.5, d: 2.2, h: 8.5, color: 0x686868 },
+                { x: 3.6, z: 9, w: 2.8, d: 2.5, h: 13, color: 0x5c5c5c },
+            ];
+
+            buildingConfigs.forEach(cfg => {
+                const bMat = new THREE.MeshStandardMaterial({ color: cfg.color, roughness: 0.75, metalness: 0.05 });
+                const building = new THREE.Mesh(new THREE.BoxGeometry(cfg.w, cfg.h, cfg.d), bMat);
+                building.position.set(cfg.x, cfg.h / 2, cfg.z);
+                building.castShadow = true;
+                building.receiveShadow = true;
+                lG.add(building);
+
+                // Window rows (subtle darker rectangles on front face)
+                const windowMat = new THREE.MeshStandardMaterial({ color: 0x4a4e55, roughness: 0.3, metalness: 0.1 });
+                const floors = Math.floor(cfg.h / 1.2);
+                for (let f = 0; f < floors; f++) {
+                    const windowRow = new THREE.Mesh(new THREE.BoxGeometry(cfg.w * 0.7, 0.3, 0.02), windowMat);
+                    const zFace = cfg.x > 0 ? cfg.z - cfg.d / 2 - 0.01 : cfg.z + cfg.d / 2 + 0.01;
+                    windowRow.position.set(cfg.x, 1.5 + f * 1.2, zFace);
+                    lG.add(windowRow);
+                }
+
+                // Rooftop detail
+                if (Math.random() > 0.4) {
+                    const roofDetail = new THREE.Mesh(
+                        new THREE.BoxGeometry(cfg.w * 0.3, 0.6, cfg.d * 0.3),
+                        new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6 })
+                    );
+                    roofDetail.position.set(cfg.x, cfg.h + 0.3, cfg.z);
+                    lG.add(roofDetail);
+                }
+            });
+
+            // Street lamp posts
+            const lampMat = new THREE.MeshStandardMaterial({ color: 0x606060, roughness: 0.4, metalness: 0.3 });
+            [-1, 1].forEach(side => {
+                for (let i = -2; i < 3; i++) {
+                    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 3.5, 8), lampMat);
+                    pole.position.set(side * 1.7, 1.75, i * 5);
+                    pole.castShadow = true;
+                    lG.add(pole);
+
+                    // Lamp arm
+                    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.5, 6), lampMat);
+                    arm.rotation.z = side * Math.PI / 2.5;
+                    arm.position.set(side * 1.55, 3.4, i * 5);
+                    lG.add(arm);
+
+                    // Lamp head
+                    const lampHead = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.15, 0.06, 0.08),
+                        new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: 0.3, metalness: 0.2 })
+                    );
+                    lampHead.position.set(side * 1.4, 3.55, i * 5);
+                    lG.add(lampHead);
+                }
+            });
+
+            lG.traverse(child => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
+            scene.add(lG);
+            subjects.landscape = lG;
+            lG.visible = false;
+        }
+
+        function resizeViewport() {
+            const wrapper = $('viewport-wrapper'); const container = $('viewport-container');
+            const w = wrapper.clientWidth - 20; const h = w * (state.ar.h / state.ar.w); const maxH = wrapper.clientHeight - 20;
+            let finalW = w, finalH = h; if (finalH > maxH) { finalH = maxH; finalW = finalH * (state.ar.w / state.ar.h); }
+            container.style.width = `${finalW}px`; container.style.height = `${finalH}px`;
+            renderer.setSize(finalW, finalH); camera.aspect = state.ar.w / state.ar.h; camera.updateProjectionMatrix();
+        }
+
+        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+
+        function updateColorTemp(k) {
+            const temp = k / 100; let r, g, b;
+            if(temp <= 66) { r = 255; g = 99.47 * Math.log(temp) - 161.1; b = temp <= 19 ? 0 : 138.5 * Math.log(temp - 10) - 305; } 
+            else { r = 329.7 * Math.pow(temp - 60, -0.133); g = 288.1 * Math.pow(temp - 60, -0.075); b = 255; }
+            const color = `rgb(${Math.round(Math.max(0,Math.min(255,r)))}, ${Math.round(Math.max(0,Math.min(255,g)))}, ${Math.round(Math.max(0,Math.min(255,b)))})`;
+            mainLight.color.set(color); ambientLight.color.set(color);
+            let label = "Neutral";
+            if(k < 2000) label = "Candlelight"; else if(k < 3000) label = "Tungsten"; else if(k < 4500) label = "Warm White"; else if(k < 6000) label = "Daylight"; else if(k < 7500) label = "Cloudy"; else if(k < 9000) label = "Blue Hour"; else label = "Deep Blue";
+            const displayEl = $('tempDisplayCombined'); displayEl.innerText = `${k}K - ${label}`; displayEl.style.color = color;
+        }
+
+        function calculateMetrics() {
+            const dist = camera.position.distanceTo(controls.target); let ss = 'Medium Shot';
+            if(state.subjectMode === 'human') { if(dist < 1.0) ss = 'Extreme Close-up'; else if(dist < 1.8) ss = 'Close-up'; else if(dist < 3.5) ss = 'Medium Shot'; else if(dist < 6.0) ss = 'Full Body Shot'; else ss = 'Wide Shot'; } else if(state.subjectMode === 'product') { if(dist < 0.8) ss = 'Macro Detail'; else if(dist < 2.5) ss = 'Product Studio Shot'; else ss = 'Wide Product Shot'; } else { ss = dist < 10 ? 'Street View' : 'Wide Landscape'; } state.shotSize = ss;
+            const polar = controls.getPolarAngle() * (180/Math.PI); const aziDeg = controls.getAzimuthalAngle() * (180/Math.PI); const absAzi = Math.abs(aziDeg);
+            
+            // --- Improved angle description (exaggerated for AI image gen) ---
+            let vertAngle = '';
+            let horizAngle = '';
+            
+            // Vertical angle (polar: 0=top, 90=eye-level, 180=bottom)
+            if(polar < 20) {
+                vertAngle = 'extreme top-down bird\'s eye view, camera directly above looking straight down';
+            } else if(polar < 45) {
+                vertAngle = 'dramatic high angle shot, camera looking down steeply from above';
+            } else if(polar < 70) {
+                vertAngle = 'slightly elevated camera angle, looking down gently';
+            } else if(polar > 160) {
+                vertAngle = 'extreme worm\'s eye view, camera on the ground looking straight up';
+            } else if(polar > 135) {
+                vertAngle = 'dramatic low angle shot, camera near ground level looking up';
+            } else if(polar > 110) {
+                vertAngle = 'low angle shot, camera below eye level looking up';
+            } else {
+                vertAngle = 'eye level camera angle';
+            }
+            
+            // Horizontal angle (azimuth: 0=front, +-90=side, +-180=back)
+            if(absAzi < 10) {
+                horizAngle = 'facing directly toward camera, straight frontal view';
+            } else if(absAzi < 50) {
+                const side = aziDeg > 0 ? 'left' : 'right';
+                horizAngle = `three-quarter view from the ${side}, turned slightly away from camera`;
+            } else if(absAzi < 80) {
+                const side = aziDeg > 0 ? 'left' : 'right';
+                horizAngle = `strong three-quarter angle from the ${side} side`;
+            } else if(absAzi < 100) {
+                const side = aziDeg > 0 ? 'left' : 'right';
+                horizAngle = `profile view, ${side} side facing camera, shot from the side`;
+            } else if(absAzi < 150) {
+                horizAngle = 'rear three-quarter view, mostly showing the back';
+            } else {
+                horizAngle = 'shot from behind, back of subject facing camera';
+            }
+            
+            // Combine into a single descriptive string
+            let finalAngle;
+            if(polar < 20 || polar > 160) {
+                // extreme vertical angles dominate
+                finalAngle = vertAngle;
+            } else if(polar >= 70 && polar <= 110) {
+                // eye level - horizontal matters more
+                finalAngle = horizAngle;
+            } else {
+                // combine both
+                finalAngle = `${vertAngle}, ${horizAngle}`;
+            }
+            
+            state.angleString = finalAngle; 
+            // Short version for debug display
+            let shortAngle = '';
+            if(polar < 20) shortAngle = 'Top-Down';
+            else if(polar < 45) shortAngle = 'High Angle';
+            else if(polar < 70) shortAngle = 'Slightly High';
+            else if(polar > 160) shortAngle = "Worm's Eye";
+            else if(polar > 135) shortAngle = 'Low Angle';
+            else if(polar > 110) shortAngle = 'Slightly Low';
+            else shortAngle = 'Eye Level';
+            
+            if(absAzi < 10) shortAngle += ' / Front';
+            else if(absAzi < 50) shortAngle += ` / 3Q ${aziDeg > 0 ? 'L' : 'R'}`;
+            else if(absAzi < 100) shortAngle += ` / Side ${aziDeg > 0 ? 'L' : 'R'}`;
+            else if(absAzi < 150) shortAngle += ' / Rear 3Q';
+            else shortAngle += ' / Back';
+            
+            $('debug-angle').innerText = shortAngle;
+            
+            const subjectPos = new THREE.Vector3(0, 1.7, 0); subjectPos.project(camera);
+            const x = subjectPos.x, y = subjectPos.y; let comp = 'Centered Composition';
+            const isLeft = x < -0.2, isRight = x > 0.2, isTop = y > 0.2, isBottom = y < -0.2;
+            if (isLeft && isTop) comp = 'Rule of Thirds (Top-Left)'; else if (isRight && isTop) comp = 'Rule of Thirds (Top-Right)'; else if (isLeft && isBottom) comp = 'Rule of Thirds (Bottom-Left)'; else if (isRight && isBottom) comp = 'Rule of Thirds (Bottom-Right)'; else if (isLeft) comp = 'Subject Placed Left'; else if (isRight) comp = 'Subject Placed Right'; else if (isTop) comp = 'Headroom / Upper Framing'; else if (isBottom) comp = 'Lower Framing';
+            state.composition = comp; $('debug-comp').innerText = comp;
+            updatePrompt();
+        }
+
+        function updatePrompt() {
+            const p = [];
+            let subj = $('subjectDetail').value.trim();
+            if(!subj) subj = state.subjectMode === 'human' ? "Portrait of a person" : (state.subjectMode === 'product' ? "Product shot" : "Landscape view");
+            p.push(`**${subj}**`);
+            // Sub mode style kw
+            p.push(state.subMode.kw);
+            
+            p.push(state.shotSize);
+            
+            if(state.composition.includes('Rule of Thirds')) p.push("rule of thirds composition, subject offset from center");
+            else if(state.composition.includes('Left')) p.push("subject positioned on the left side of frame, off-center composition");
+            else if(state.composition.includes('Right')) p.push("subject positioned on the right side of frame, off-center composition");
+            else if(state.composition !== 'Centered Composition') p.push(state.composition.toLowerCase());
+            
+            // Angle: use the verbose description directly
+            p.push(state.angleString);
+            
+            // Camera body keywords
+            p.push(state.camera.kw);
+            
+            // Lens: more descriptive based on focal length ranges
+            const fl = state.focal;
+            let lensDesc = '';
+            if(fl <= 10) {
+                lensDesc = `${fl}mm fisheye lens, extreme barrel distortion, ultra-wide 180 degree field of view, everything in focus`;
+            } else if(fl <= 18) {
+                lensDesc = `${fl}mm ultra-wide angle lens, expansive field of view, exaggerated perspective distortion, deep depth of field`;
+            } else if(fl <= 28) {
+                lensDesc = `${fl}mm wide angle lens, broad environmental context visible, slight perspective distortion at edges`;
+            } else if(fl <= 40) {
+                lensDesc = `${fl}mm lens, natural perspective similar to human eye, balanced field of view`;
+            } else if(fl <= 60) {
+                lensDesc = `${fl}mm standard lens, natural perspective, minimal distortion, classic framing`;
+            } else if(fl <= 100) {
+                lensDesc = `${fl}mm portrait telephoto lens, flattering perspective compression, subject isolation from background`;
+            } else if(fl <= 200) {
+                lensDesc = `${fl}mm telephoto lens, strong background compression, distant subject appears closer, narrow field of view`;
+            } else {
+                lensDesc = `${fl}mm super telephoto lens, extreme compression, paper-thin depth of field, heavily compressed background`;
+            }
+            p.push(lensDesc);
+            
+            let k = state.temp;
+            let t = "neutral lighting";
+            if(k < 2000) t = "dim candlelight, warm firelight glow, deep orange ambient";
+            else if(k < 3000) t = "warm tungsten lighting, cozy indoor atmosphere, amber cast";
+            else if(k < 4500) t = "warm golden hour lighting, soft golden sunlight, romantic warmth";
+            else if(k < 6000) t = "neutral daylight, clean white balanced lighting, natural colors";
+            else if(k < 7500) t = "cool overcast sky lighting, soft diffused light, subtle blue cast";
+            else if(k < 9000) t = "cold blue hour lighting, cinematic cool blue tone, twilight atmosphere";
+            else t = "extremely cold blue-white lighting, clinical sterile atmosphere, icy tone";
+            p.push(t);
+
+            const eff = state.eff;
+            const aperture = APERTURES[eff.apertureIdx];
+            if(aperture <= 1.4) p.push(`f/${aperture}, extremely shallow depth of field, dreamy creamy bokeh, background completely dissolved`);
+            else if(aperture < 2.0) p.push(`f/${aperture}, shallow depth of field, beautiful creamy bokeh circles, soft blurred background`);
+            else if(aperture < 4.0) p.push(`f/${aperture}, moderate bokeh, pleasantly blurred background, subject separation`);
+            else if(aperture >= 16) p.push(`f/${aperture}, everything in sharp focus, deep depth of field from foreground to background`);
+            else if(aperture >= 11) p.push(`f/${aperture}, wide depth of field, most of the scene in focus`);
+            
+            const shutter = SHUTTERS[eff.shutterIdx];
+            if(eff.shutterIdx >= 6) p.push(`${shutter} long exposure, silky smooth motion blur, light trails, flowing water effect`);
+            else if(eff.shutterIdx === 5) p.push(`${shutter} slow shutter speed, visible motion blur, intentional movement`);
+            else if(eff.shutterIdx <= 1) p.push(`${shutter} ultra fast shutter speed, frozen action, every detail crisp and sharp`);
+
+            if(eff.vignetteIdx > 0) p.push(['','subtle dark vignette at edges','noticeable vignette darkening corners','heavy dark vignette framing the subject'][eff.vignetteIdx]);
+            if(eff.chromaticIdx > 0) p.push(['','slight chromatic aberration on edges','visible chromatic aberration, color fringing','strong chromatic aberration, rgb color split, glitch aesthetic'][eff.chromaticIdx]);
+
+            p.push("ACES color space, high fidelity, 8k");
+
+            const finalText = p.join(", ") + " " + state.ar.val;
+            $('finalOutput').value = finalText;
+            const displayNode = $('finalOutputDisplay');
+            if (displayNode) displayNode.textContent = finalText || "No content synergy yet. Start building your scenario.";
+        }
+
+        window.addEventListener('load', initApp);
+    </script>
+</body>
+</html>
+
+
+
+
